@@ -1,60 +1,101 @@
-
-import React from 'react';
+import React, {useState} from 'react';
+import { StyleSheet, Dimensions,View , Platform} from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import { WebView } from 'react-native-webview';
-import { Text } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons'; // Feather yerine
 
+// COMPONENTLERİN DOĞRU ŞEKİLDE İMPORT EDİLİYOR
+import HomeScreen from './HomeScreen';
+import AppointmentCardScreen from './AppointmentCardScreen';
+import AskScreen from './AskScreen';
+import CreateAppointmentScreen from './CreateAppointmentScreen';
+import AccountScreen from './AccountScreen';
+import AskUsModal from './AskUsModal';
+
+const { width } = Dimensions.get('window');
 const Tab = createBottomTabNavigator();
 
-export default function TabLayout() {
+export default function Layout() {
+   const [isModalVisible, setIsModalVisible] = useState(false);
   return (
+    <>
     <Tab.Navigator
-      screenOptions={{
-        tabBarActiveTintColor: 'white',
+      screenOptions={({ route }) => ({
         tabBarStyle: {
-          backgroundColor: '#006400',
+          backgroundColor: '#104438',
+          height: 80,
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
-          position: 'absolute',
-          height: 80,
-          paddingTop: 10,
-          paddingBottom: 5,
-          borderWidth: 0,
+        
         },
-        headerShown: false, // Bu satırı ekleyerek başlığı gizle
-      }}
+        tabBarActiveTintColor: 'white',
+        tabBarInactiveTintColor: 'white',
+        headerShown: false,
+         // 🔽 YENİ EKLENEN KISIM
+    tabBarLabelStyle: {
+      fontSize: 11,
+      flexWrap: 'wrap',
+      textAlign: 'center',
+      justifyContent:'center',
+      width: 90,
+    },
+    tabBarItemStyle: {
+      width: 80,
+      padding:7
+    },
+
+        tabBarIcon: ({ color }) => {
+          let iconName: keyof typeof Feather.glyphMap = 'home';
+
+          if (route.name === 'Ana Sayfa') iconName = 'home';
+          else if (route.name === 'Randevu Oluştur') iconName = 'file-text';
+          else if (route.name === 'Bize Sor') iconName = 'message-circle';
+          else if (route.name === 'Prova Kartı') iconName = 'calendar';
+          else if (route.name === 'Hesabım') iconName = 'user';
+            if (route.name === 'Bize Sor') {
+          return (
+            <View
+              style={{
+                backgroundColor: 'white',
+                borderRadius: 35,
+                width: 64,
+                height: 64,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginBottom: Platform.OS === 'android' ? 40 : 40, // navbar üstüne taşır
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 4,
+                elevation: 8, // Android gölgesi
+              }}
+            >
+        <FontAwesome name="comment" size={28} color="black" />
+      </View>
+    );
+  }
+          return <Feather name={iconName} size={24} color="white" />;
+        },
+      })}
     >
-      <Tab.Screen
-        name="Home"
-        options={{
-          title: 'Ana Sayfa',
-          tabBarStyle: { display: 'none' },
-          tabBarIcon: ({ color }) => <IconSymbol size={32} name="calendar" color={color} />,
-        }}
-        component={HomeScreen}
-      />
-      {/* Diğer Tab ekranlarını ekleyebilirsiniz */}
+      <Tab.Screen name="Ana Sayfa" component={HomeScreen} />
+      <Tab.Screen name="Randevu Oluştur" component={AppointmentCardScreen}/>
+      <Tab.Screen name="Bize Sor"
+          component={() => <View />} // Boş bir bileşen döndür
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              setIsModalVisible(true); // Modalı aç
+            },
+          }} />
+      <Tab.Screen name="Prova Kartı" component={CreateAppointmentScreen} />
+      <Tab.Screen name="Hesabım" component={AccountScreen} />
     </Tab.Navigator>
+    
+    <AskUsModal visible={isModalVisible} onClose={() => setIsModalVisible(false)}  ></AskUsModal>
+    </>
   );
 }
-
-// HomeScreen bileşeni
-const HomeScreen = () => {
-  return (
-    <WebView
-      source={{ uri: 'https://angelhousewedding.com/' }}
-      style={{ flex: 1 }}
-      sharedCookiesEnabled={true}
-      javaScriptEnabled={true}
-      domStorageEnabled={true}
-      cacheMode="LOAD_NO_CACHE"
-    />
-  );
-};
-
-
-
 
 
 

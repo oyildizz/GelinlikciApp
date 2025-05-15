@@ -38,12 +38,13 @@ export default function HomeScreen() {
       <WebView
          source={{ uri: userToken ? `https://angelhousewedding.com/?token=${userToken}` : 'https://angelhousewedding.com/' }} 
          style={{ flex: 1 }}
-         sharedCookiesEnabled={true} // Çerezleri koru (oturumu açık tutar)
+         sharedCookiesEnabled={true} // Çerezleri koru (oturumu açık tutar
          javaScriptEnabled={true} // JavaScript aktif
          domStorageEnabled={true} // Tarayıcı depolaması açık
          cacheMode="LOAD_NO_CACHE" // Sayfanın en güncel halini yükle
-
+        
       />
+      
     </View>
   );
 }
