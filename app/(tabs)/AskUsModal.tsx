@@ -1,6 +1,17 @@
-// components/ContactModal.tsx
-import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
+import {
+  Modal,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Platform,
+  KeyboardAvoidingView,
+} from 'react-native';
 
 export default function AskUsModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const [fullName, setFullName] = useState('');
@@ -8,53 +19,128 @@ export default function AskUsModal({ visible, onClose }: { visible: boolean; onC
   const [email, setEmail] = useState('');
   const [question, setQuestion] = useState('');
 
-  const handleSubmit = async () => {
-  try {
-    const response = await fetch('http://YOUR_SERVER_IP:3000/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fullName, phone, email, question }),
-    });
+  const [fullNameError, setFullNameError] = useState(false);
+  const [emailError, setEmailError] = useState(false);
+  const [questionError, setQuestionError] = useState(false);
 
-    if (response.ok) {
-      Alert.alert('Başarılı', 'Mesajınız gönderildi.');
-      onClose();
-    } else {
-      Alert.alert('Hata', 'Mesaj gönderilemedi.');
+  // Modal kapandığında formu sıfırla
+  useEffect(() => {
+    if (!visible) {
+      clearForm();
     }
-  } catch (err) {
-    Alert.alert('Hata', 'Sunucuya ulaşılamıyor.');
-    console.log(err);
-  }
-};
+  }, [visible]);
+
+  const clearForm = () => {
+    setFullName('');
+    setPhone('');
+    setEmail('');
+    setQuestion('');
+    setFullNameError(false);
+    setEmailError(false);
+    setQuestionError(false);
+  };
+
+  const handleSubmit = async () => {
+    const isFullNameValid = fullName.trim() !== '';
+    const isEmailValid = email.trim() !== '';
+    const isQuestionValid = question.trim() !== '';
+
+    setFullNameError(!isFullNameValid);
+    setEmailError(!isEmailValid);
+    setQuestionError(!isQuestionValid);
+
+    if (!isFullNameValid || !isEmailValid || !isQuestionValid) {
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, 'iletisimSorulari'), {
+        fullName,
+        phone,
+        email,
+        question,
+        createdAt: new Date(),
+      });
+      clearForm();
+      onClose();
+    } catch (error) {
+      console.log('Veri gönderilemedi:', error);
+    }
+  };
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.title}>Bize Sor</Text>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.keyboardAvoiding}
+        >
+          <View style={styles.modalContainer}>
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={styles.title}>Bize Sor</Text>
 
-          <TextInput style={styles.input} placeholder="Ad Soyad" value={fullName} onChangeText={setFullName} />
-          <TextInput style={styles.input} placeholder="Telefon Numarası" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-          <TextInput style={styles.input} placeholder="Mail Adresi" value={email} onChangeText={setEmail} keyboardType="email-address" />
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Sorunuz"
-            value={question}
-            onChangeText={setQuestion}
-            multiline
-            numberOfLines={4}
-          />
+              <TextInput
+                style={[styles.input, fullNameError && styles.inputError]}
+                placeholder="Ad Soyad"
+                value={fullName}
+                onChangeText={(text) => {
+                  setFullName(text);
+                  setFullNameError(false);
+                }}
+              />
 
-          <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-              <Text style={styles.buttonText}>Gönder</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
-              <Text style={styles.buttonText}>İptal</Text>
-            </TouchableOpacity>
+              <TextInput
+                style={styles.input}
+                placeholder="Telefon Numarası"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+              />
+
+              <TextInput
+                style={[styles.input, emailError && styles.inputError]}
+                placeholder="Mail Adresi"
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  setEmailError(false);
+                }}
+                keyboardType="email-address"
+              />
+
+              <TextInput
+                style={[styles.input, styles.textArea, questionError && styles.inputError]}
+                placeholder="Sorunuz"
+                value={question}
+                onChangeText={(text) => {
+                  setQuestion(text);
+                  setQuestionError(false);
+                }}
+                multiline
+                numberOfLines={4}
+              />
+
+              <View style={styles.buttonRow}>
+                <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                  <Text style={styles.buttonText}>Gönder</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.cancelButton]}
+                  onPress={() => {
+                    clearForm();
+                    onClose();
+                  }}
+                >
+                  <Text style={styles.buttonText}>İptal</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -65,12 +151,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
-    padding: 20,
+  },
+  keyboardAvoiding: {
+    flex: 1,
   },
   modalContainer: {
     backgroundColor: '#fff',
     borderRadius: 12,
+    margin: 20,
     padding: 20,
+    maxHeight: '90%',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   title: {
     fontSize: 20,
@@ -84,6 +178,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     marginVertical: 6,
+  },
+  inputError: {
+    borderColor: 'red',
   },
   textArea: {
     height: 100,
