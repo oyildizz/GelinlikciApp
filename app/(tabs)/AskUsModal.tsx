@@ -2,16 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import {
-  Modal,
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   Platform,
   KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
+import Modal from 'react-native-modal';
+import { BlurView } from 'expo-blur';
+
 
 export default function AskUsModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const [fullName, setFullName] = useState('');
@@ -23,11 +25,8 @@ export default function AskUsModal({ visible, onClose }: { visible: boolean; onC
   const [emailError, setEmailError] = useState(false);
   const [questionError, setQuestionError] = useState(false);
 
-  // Modal kapandığında formu sıfırla
   useEffect(() => {
-    if (!visible) {
-      clearForm();
-    }
+    if (!visible) clearForm();
   }, [visible]);
 
   const clearForm = () => {
@@ -49,9 +48,7 @@ export default function AskUsModal({ visible, onClose }: { visible: boolean; onC
     setEmailError(!isEmailValid);
     setQuestionError(!isQuestionValid);
 
-    if (!isFullNameValid || !isEmailValid || !isQuestionValid) {
-      return;
-    }
+    if (!isFullNameValid || !isEmailValid || !isQuestionValid) return;
 
     try {
       await addDoc(collection(db, 'iletisimSorulari'), {
@@ -69,91 +66,94 @@ export default function AskUsModal({ visible, onClose }: { visible: boolean; onC
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.keyboardAvoiding}
-        >
-          <View style={styles.modalContainer}>
-            <ScrollView
-              contentContainerStyle={styles.scrollContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              <Text style={styles.title}>Bize Sor</Text>
+    <Modal
+      isVisible={visible}
+      onBackdropPress={onClose}
+      onBackButtonPress={onClose}
+      avoidKeyboard
+      useNativeDriver
+      backdropOpacity={0} // 🔍 Blur kullandığımız için opaklığı sıfırladık
+      style={styles.modal}
+    >
+      {/* 🔴 BLUR VIEW ARKA PLAN */}
+   <BlurView intensity={80}  style={StyleSheet.absoluteFill} />
 
-              <TextInput
-                style={[styles.input, fullNameError && styles.inputError]}
-                placeholder="Ad Soyad"
-                value={fullName}
-                onChangeText={(text) => {
-                  setFullName(text);
-                  setFullNameError(false);
+
+
+        <View style={styles.modalContainer}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.title}>Bize Sor</Text>
+
+            <TextInput
+              style={[styles.input, fullNameError && styles.inputError]}
+              placeholder="Ad Soyad"
+              value={fullName}
+              onChangeText={(text) => {
+                setFullName(text);
+                setFullNameError(false);
+              }}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Telefon Numarası"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+            />
+
+            <TextInput
+              style={[styles.input, emailError && styles.inputError]}
+              placeholder="Mail Adresi"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                setEmailError(false);
+              }}
+              keyboardType="email-address"
+            />
+
+            <TextInput
+              style={[styles.input, styles.textArea, questionError && styles.inputError]}
+              placeholder="Sorunuz"
+              value={question}
+              onChangeText={(text) => {
+                setQuestion(text);
+                setQuestionError(false);
+              }}
+              multiline
+              numberOfLines={4}
+            />
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                <Text style={styles.buttonText}>Gönder</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => {
+                  clearForm();
+                  onClose();
                 }}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Telefon Numarası"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-              />
-
-              <TextInput
-                style={[styles.input, emailError && styles.inputError]}
-                placeholder="Mail Adresi"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  setEmailError(false);
-                }}
-                keyboardType="email-address"
-              />
-
-              <TextInput
-                style={[styles.input, styles.textArea, questionError && styles.inputError]}
-                placeholder="Sorunuz"
-                value={question}
-                onChangeText={(text) => {
-                  setQuestion(text);
-                  setQuestionError(false);
-                }}
-                multiline
-                numberOfLines={4}
-              />
-
-              <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-                  <Text style={styles.buttonText}>Gönder</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.button, styles.cancelButton]}
-                  onPress={() => {
-                    clearForm();
-                    onClose();
-                  }}
-                >
-                  <Text style={styles.buttonText}>İptal</Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </View>
+              >
+                <Text style={styles.buttonText}>İptal</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+    
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  modal: {
     justifyContent: 'center',
-  },
-  keyboardAvoiding: {
-    flex: 1,
+    margin: 0,
   },
   modalContainer: {
     backgroundColor: '#fff',
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#104438',
     padding: 10,
     borderRadius: 8,
     flex: 1,
@@ -206,4 +206,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
+   
 });
