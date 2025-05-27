@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react';
-import { Linking } from 'react-native';
+import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Feather } from '@expo/vector-icons';
-import { FontAwesome } from '@expo/vector-icons';
-import { View, Platform } from 'react-native';
+import { Feather, FontAwesome } from '@expo/vector-icons';
+import { View, Platform, Keyboard } from 'react-native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 import HomeScreen from './HomeScreen';
 import AppointmentCardScreen from './AppointmentCardScreen';
@@ -13,30 +12,22 @@ import AskUsModal from './AskUsModal';
 
 const Tab = createBottomTabNavigator();
 
-function AskUsRedirect() {
-  useEffect(() => {
-    const fullName = 'İsminizi yazın';
-    const phone = 'Telefonunuzu yazın';
-    const email = 'Mail adresinizi yazın';
-    const question = 'Sorunuzu yazın';
+export default function Layout() {
+  const [keyboardVisible, setKeyboardVisible] = React.useState(false);
 
-    const message = `👋 Merhaba, bir soru göndermek istiyorum:\n\n👤 Ad Soyad: ${fullName}\n📱 Telefon: ${phone}\n✉️ Email: ${email}\n❓ Soru: ${question}`;
-    const whatsappNumber = '905074185428'; // numaranızı yazın
-    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-
-    Linking.openURL(url).catch(err => {
-      console.error('WhatsApp bağlantısı açılamadı:', err);
-    });
+  React.useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
   }, []);
 
-  return null;
-}
-
-export default function Layout() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarStyle: {
+        tabBarStyle: keyboardVisible ? { display: 'none' } : {
           backgroundColor: '#104438',
           height: 80,
           borderTopLeftRadius: 20,
@@ -92,11 +83,43 @@ export default function Layout() {
         },
       })}
     >
-      <Tab.Screen name="Ana Sayfa" component={HomeScreen} />
-      <Tab.Screen name="Randevu Oluştur" component={CreateAppointmentScreen} />
+      <Tab.Screen
+        name="Ana Sayfa"
+        component={HomeScreen}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.setParams({ refresh: Date.now() });
+          },
+        })}
+      />
+      <Tab.Screen
+        name="Randevu Oluştur"
+        component={CreateAppointmentScreen}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.setParams({ refresh: Date.now() });
+          },
+        })}
+      />
       <Tab.Screen name="Bize Sor" component={AskUsModal} />
-      <Tab.Screen name="Prova Kartı" component={AppointmentCardScreen} />
-      <Tab.Screen name="Hesabım" component={AccountScreen} />
+      <Tab.Screen
+        name="Prova Kartı"
+        component={AppointmentCardScreen}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.setParams({ refresh: Date.now() });
+          },
+        })}
+      />
+      <Tab.Screen
+        name="Hesabım"
+        component={AccountScreen}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.setParams({ refresh: Date.now() });
+          },
+        })}
+      />
     </Tab.Navigator>
   );
 }
