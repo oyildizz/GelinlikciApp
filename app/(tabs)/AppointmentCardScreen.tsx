@@ -10,6 +10,9 @@ import * as Notifications from 'expo-notifications';
 import { WebView } from 'react-native-webview';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import FontAwesome from '@expo/vector-icons/build/FontAwesome';
+import * as Font from 'expo-font';
+import { useFonts } from 'expo-font';
+import AppLoading from 'expo-app-loading';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -30,6 +33,12 @@ const RandevuForm = () => {
   const [showSaatSecenekleri, setShowSaatSecenekleri] = useState(false);
   const [activeWebUrl, setActiveWebUrl] = useState<string | null>(null);
   const [showToolbar, setShowToolbar] = useState(true);
+
+
+  const [fontsLoaded] = useFonts({
+  'ArialMdm': require('../../assets/fonts/ArialMdm.ttf'),
+});
+
 
   const bugun = new Date();
   bugun.setHours(0, 0, 0, 0);
@@ -243,7 +252,7 @@ const styles = StyleSheet.create({
   },
   breadcrumbLink: {
     color: '#2e5e4e',
-    fontWeight: 'bold',
+
   },
   breadcrumbActive: {
     color: '#888',
@@ -274,14 +283,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
    justifyContent:'center',
     flexWrap: 'wrap',
-  marginTop:10
+  marginTop:20
   },
   menuItem: {
     fontSize: screenWidth < 400 ? 10 : 12,
     color: '#000',
     marginVertical: 4,
-    padding:10,
-    
+    paddingRight:10,
+    paddingLeft:10,
+    fontFamily:'ArialMdm'
     
   },
   active: {
