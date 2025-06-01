@@ -13,31 +13,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-exports.sendContactMail = functions.firestore
-  .document("iletisimSorulari/{docId}")
-  .onCreate(async (snap, context) => {
-    const data = snap.data();
 
-    const mailOptions = {
-      from: "angelhouseweddingg@gmail.com",
-      to: "info@angelhousewedding.com",
-      subject: "Yeni Bize Sor Mesajı",
-      html: `
-        <h3>Yeni Mesaj</h3>
-        <p><strong>Ad Soyad:</strong> ${data.fullName}</p>
-        <p><strong>Telefon:</strong> ${data.phone}</p>
-        <p><strong>Email:</strong> ${data.email}</p>
-        <p><strong>Soru:</strong> ${data.question}</p>
-      `,
-    };
-
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log("E-posta gönderildi.");
-    } catch (error) {
-      console.error("E-posta gönderilemedi:", error);
-    }
-  });
 exports.sendProvaMail = functions.firestore
   .document("provaRandevular/{docId}")
   .onCreate(async (snap, context) => {
@@ -52,8 +28,16 @@ exports.sendProvaMail = functions.firestore
         <p><strong>Ad Soyad:</strong> ${data.name}</p>
         <p><strong>Telefon:</strong> ${data.phone}</p>
         <p><strong>Email:</strong> ${data.email}</p>
-        <p><strong>Tarih:</strong> ${data.tarih}</p>
-        <p><strong>Saat:</strong> ${data.saat}</p>
+        
+        <p><strong>1. Prova Tarihi:</strong> ${data.tarih1}</p>
+        <p><strong>1. Prova Saati:</strong> ${data.saat1}</p>
+        
+        <p><strong>2. Prova Tarihi:</strong> ${data.tarih2}</p>
+        <p><strong>2. Prova Saati:</strong> ${data.saat2}</p>
+        
+        <p><strong>Ürün Teslim Tarihi:</strong> ${data.teslimTarihi}</p>
+        <p><strong>Ürün Teslim Saati:</strong> ${data.teslimSaat}</p>
+
         <p><strong>Not:</strong> ${data.notlar || 'Yok'}</p>
       `,
     };
@@ -65,3 +49,4 @@ exports.sendProvaMail = functions.firestore
       console.error("Prova randevu e-postası gönderilemedi:", error);
     }
   });
+
