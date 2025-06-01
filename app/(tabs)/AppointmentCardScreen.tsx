@@ -289,7 +289,7 @@ const handleSubmit = async () => {
         />
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.breadcrumbContainer}>
+          {/* <View style={styles.breadcrumbContainer}>
             <Text style={styles.breadcrumbText}>
               <Text
                 style={styles.breadcrumbLink}
@@ -300,7 +300,7 @@ const handleSubmit = async () => {
               {" » "}
               <Text style={styles.breadcrumbActive}>Prova Kartı</Text>
             </Text>
-          </View>
+          </View> */}
           <View style={styles.introContainer}>
             <Image
               source={require("../../assets/images/siziBekliyoruz.png")}
@@ -489,6 +489,8 @@ randevuListContainer: {
 },
 
 randevuCardStyled: {
+  width: screenWidth < 400 ? "100%" : "95%",
+  alignSelf: "center",
   backgroundColor: "#f8f9fa",
   borderRadius: 12,
   padding: 16,
