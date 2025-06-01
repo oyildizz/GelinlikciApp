@@ -36,7 +36,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/angel-house1.png",
+          "image": "./assets/images/angel-house.png",
           "enableFullScreenImage_legacy": true,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -44,6 +44,10 @@
         }
       ]
     ],
+     "splash": {
+            "image": "./assets/images/angel-house.png",
+            "resizeMode": "cover"
+        },
     "experiments": {
       "typedRoutes": true
     },
