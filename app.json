@@ -5,12 +5,12 @@
     "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/angel-house1.png",
-     "notification": {
-      "icon": "./assets/images/angel-house1.png", 
+    "notification": {
+      "icon": "./assets/images/angel-house1.png",
       "color": "#104438"
     },
-      "splash": {
-      "image": "./assets/images/angel-house11.png", 
+    "splash": {
+      "image": "./assets/images/angel-house11.png",
       "resizeMode": "contain"
     },
     "scheme": "myapp",
@@ -44,9 +44,9 @@
           "enableFullScreenImage_legacy": true,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
-      
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

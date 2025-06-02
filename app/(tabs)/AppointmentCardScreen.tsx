@@ -13,7 +13,7 @@ import {
   Image,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { addDoc, collection, getDocs, query, orderBy } from "firebase/firestore";
+import { addDoc, collection, getDocs, query, orderBy, where } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import * as Notifications from "expo-notifications";
 import { WebView } from "react-native-webview";
@@ -23,6 +23,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useAuth } from "../context/AuthContext";
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { getDeviceId } from "../utils/getDeviceId";
 
 type RootStackParamList = {
   "Prova Kartı": { goToUrl?: string | null };
@@ -54,6 +55,8 @@ export function RandevuForm() {
   const [isLoading, setIsLoading] = useState(true);
   const bugun = new Date();
   bugun.setHours(0, 0, 0, 0);
+
+
 
 
  // Tarihler
@@ -163,14 +166,18 @@ useEffect(() => {
 }, []);
 
 
- const randevulariYukle = async () => {
+const randevulariYukle = async () => {
+  setIsLoading(true);
   try {
-    const q = query(collection(db, "provaRandevular"), orderBy("createdAt", "desc"));
+    const deviceId = await getDeviceId(); // 📱
+
+    const q = query(collection(db, "provaRandevular"), where("deviceId", "==", deviceId), orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
     const randevuListesi = querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
+
     setRandevular(randevuListesi);
   } catch (error) {
     console.error("Randevular çekilirken hata:", error);
@@ -214,11 +221,14 @@ const bildirimGonder = async () => {
   }
 };
 
+
 const handleSubmit = async () => {
   if (!name || !phone || !email || !onay) {
     Alert.alert("Hata", "Lütfen gerekli alanları doldurun ve onay kutusunu işaretleyin.");
     return;
   }
+
+  const deviceId = await getDeviceId();
 
   try {
     await addDoc(collection(db, "provaRandevular"), {
@@ -233,6 +243,7 @@ const handleSubmit = async () => {
       teslimSaat,
       notlar,
       createdAt: new Date(),
+      deviceId, // 🔥 Bu önemli!
     });
 
     await randevulariYukle();
