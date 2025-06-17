@@ -95,7 +95,7 @@ export default function Layout() {
         })}
       />
       <Tab.Screen
-        name="Randevu Oluştur"
+        name="Randevu Al"
         component={CreateAppointmentScreen}
         listeners={({ navigation }) => ({
           tabPress: () => {

@@ -11,7 +11,8 @@
     },
     "splash": {
       "image": "./assets/images/angel-house11.png",
-      "resizeMode": "contain"
+      "resizeMode": "contain",
+      "icon":"./assets/images/angel-house11.png"
     },
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
@@ -25,7 +26,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/angel-house1.png",
+        "foregroundImage": "./assets/images/angel-house11.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.karmeyil.angelhousewedding"
@@ -33,14 +34,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/angel-house1.png"
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/angel-house11.png",
+          "image": "./assets/images/favicon.png",
           "enableFullScreenImage_legacy": true,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
