@@ -105,7 +105,7 @@ export default function Layout() {
       />
       <Tab.Screen name="Bize Sor" component={AskUsModal} />
       <Tab.Screen
-        name="Prova Kartı"
+        name="Prova Oluştur"
         component={AppointmentCardScreen}
         listeners={({ navigation }) => ({
           tabPress: () => {
