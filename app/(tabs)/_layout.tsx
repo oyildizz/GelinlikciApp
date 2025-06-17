@@ -53,9 +53,9 @@ export default function Layout() {
           let iconName: keyof typeof Feather.glyphMap = "home";
 
           if (route.name === "Ana Sayfa") iconName = "home";
-          else if (route.name === "Randevu Oluştur") iconName = "file-text";
+          else if (route.name === "Randevu Al") iconName = "file-text";
           else if (route.name === "Bize Sor") iconName = "message-circle";
-          else if (route.name === "Prova Kartı") iconName = "calendar";
+          else if (route.name === "Prova Oluştur") iconName = "calendar";
           else if (route.name === "Hesabım") iconName = "user";
 
           if (route.name === "Bize Sor") {
@@ -99,7 +99,7 @@ export default function Layout() {
         component={CreateAppointmentScreen}
         listeners={({ navigation }) => ({
           tabPress: () => {
-            navigation.navigate("Randevu Oluştur", { goToUrl: "https://angelhousewedding.com/randevu-al" });
+            navigation.navigate("Randevu Al", { goToUrl: "https://angelhousewedding.com/randevu-al" });
           },
         })}
       />
@@ -109,7 +109,7 @@ export default function Layout() {
         component={AppointmentCardScreen}
         listeners={({ navigation }) => ({
           tabPress: () => {
-            navigation.navigate("Prova Kartı" as never, { goToUrl: null } as never);
+            navigation.navigate("Prova Oluştur" as never, { goToUrl: null } as never);
           },
         })}
       />

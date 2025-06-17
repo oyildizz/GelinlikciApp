@@ -124,6 +124,7 @@ const getBildirimZamani = (tarih: Date, saat: string) => {
       } else {
         setActiveWebUrl(null);
       }
+       resetForm();
     }, [routeParams?.goToUrl])
   );
 
@@ -203,20 +204,30 @@ const bildirimGonder = async () => {
 
   for (const { tarih, saat, label } of bildirimler) {
     const hedefZaman = getBildirimZamani(tarih, saat);
+    console.log("Hedef Zaman:", hedefZaman);
     for (const fark of zamanlar) {
       const farkInSeconds = Math.floor((hedefZaman.getTime() - suAn.getTime() - fark) / 1000);
       if (farkInSeconds <= 0) continue;
-
+  // Bildirim bilgilerini logla
+      console.log(`Bildirim için ayarlanan zaman: ${new Date(suAn.getTime() + farkInSeconds * 1000)}`);
+      console.log(`Bildirim başlık: ${label}`);
+      console.log(`Bildirim metni: ${
+        fark === zamanlar[0]
+          ? `${label} yarın saat ${saat}’te. Hatırlatmak istedik.`
+          : `${label} 2 saat sonra başlıyor.`
+      }`);
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: "Randevunuz Yaklaşıyor!",
+          title: "Prova Randevunuz Yaklaşıyor!",
           body:
             fark === zamanlar[0]
               ? `${label} yarın saat ${saat}’te. Hatırlatmak istedik.`
               : `${label} 2 saat sonra başlıyor.`,
         },
         trigger: { type: "timeInterval", seconds: farkInSeconds, repeats: false } as any,
+        
       });
+      
     }
   }
 };
@@ -272,6 +283,7 @@ const handleSubmit = async () => {
     setShowSaatSecenekleri({ saat1: false, saat2: false, teslimSaat: false });
     setShowDatePicker({ tarih1: false, tarih2: false, teslim: false });
   };
+  
 
   // if (!user) {
   //   return (
