@@ -4,29 +4,21 @@
     "slug": "angel-house-wedding",
     "version": "1.1.0",
     "orientation": "portrait",
-    "icon": "./assets/images/angel-house1.png",
+    "icon": "./assets/images/icon.png",
     "notification": {
-      "icon": "./assets/images/angel-house1.png",
+      "icon": "./assets/images/icon.png",
       "color": "#104438"
-    },
-    "splash": {
-      "image": "./assets/images/angel-house11.png",
-      "resizeMode": "contain",
-      "icon":"./assets/images/angel-house11.png"
     },
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.karmeyil.angelhousewedding",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+      "bundleIdentifier": "com.rabiaparlak.AngelHouseWedding2"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/angel-house11.png",
+        "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.karmeyil.angelhousewedding"
@@ -34,20 +26,19 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/favicon.png",
-          "enableFullScreenImage_legacy": true,
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth":200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ],
-      "expo-secure-store"
+      ]
     ],
     "experiments": {
       "typedRoutes": true
