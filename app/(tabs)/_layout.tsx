@@ -1,8 +1,7 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { View, Platform, Keyboard } from "react-native";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 import HomeScreen from "./HomeScreen";
 import AppointmentCardScreen from "./AppointmentCardScreen";
@@ -13,9 +12,9 @@ import AskUsModal from "./AskUsModal";
 const Tab = createBottomTabNavigator();
 
 export default function Layout() {
-  const [keyboardVisible, setKeyboardVisible] = React.useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
     const hideSubscription = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
     return () => {
@@ -40,14 +39,6 @@ export default function Layout() {
         headerShown: false,
         tabBarLabelStyle: {
           fontSize: 11,
-          flexWrap: "wrap",
-          textAlign: "center",
-          justifyContent: "center",
-          width: 90,
-        },
-        tabBarItemStyle: {
-          width: 80,
-          padding: 7,
         },
         tabBarIcon: ({ color }) => {
           let iconName: keyof typeof Feather.glyphMap = "home";
@@ -113,7 +104,6 @@ export default function Layout() {
           },
         })}
       />
-
       <Tab.Screen
         name="Hesabım"
         component={AccountScreen}
