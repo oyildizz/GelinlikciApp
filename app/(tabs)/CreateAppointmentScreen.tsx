@@ -41,7 +41,7 @@ export default function CreateAppointmentScreen() {
           ref={webViewRef}
           source={{ uri: 'https://angelhousewedding.com/randevu-al' }}
           style={{ flex: 1 }}
-          sharedCookiesEnabled={true}
+          sharedCookiesEnabled={false}
           javaScriptEnabled={true}
           domStorageEnabled={true}
           cacheEnabled={true}

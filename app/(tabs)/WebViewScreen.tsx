@@ -11,7 +11,9 @@ export default function WebViewScreen() {
     <WebView
       source={{ uri: url }}
       style={{ flex: 1 }}
-      sharedCookiesEnabled
+      sharedCookiesEnabled={false}
+      thirdPartyCookiesEnabled={false}
+      domStorageEnabled={false}
       javaScriptEnabled
     />
   );

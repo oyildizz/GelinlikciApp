@@ -71,9 +71,10 @@ const AccountScreen = () => {
               : 'https://angelhousewedding.com/uye-girisi/',
           }}
           style={{ flex: 1 }}
-          sharedCookiesEnabled={true}
+          sharedCookiesEnabled={false}
+          thirdPartyCookiesEnabled={false}
           javaScriptEnabled={true}
-          domStorageEnabled={true}
+          domStorageEnabled={false}
           cacheEnabled={true}
           originWhitelist={['*']}
           startInLoadingState={true}

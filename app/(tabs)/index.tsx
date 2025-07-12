@@ -41,9 +41,9 @@ export default function HomeScreen() {
             : "https://angelhousewedding.com/",
         }}
         style={{ flex: 1 }}
-        sharedCookiesEnabled={true} // Çerezleri koru (oturumu açık tutar
+        sharedCookiesEnabled={false} 
         javaScriptEnabled={true} // JavaScript aktif
-        domStorageEnabled={true} // Tarayıcı depolaması açık
+        domStorageEnabled={false} // Tarayıcı depolaması açık
         cacheMode="LOAD_NO_CACHE" // Sayfanın en güncel halini yükle
       />
     </View>

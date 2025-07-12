@@ -46,7 +46,7 @@ export default function Layout() {
           if (route.name === "Ana Sayfa") iconName = "home";
           else if (route.name === "Randevu Al") iconName = "file-text";
           else if (route.name === "Bize Sor") iconName = "message-circle";
-          else if (route.name === "Prova Oluştur") iconName = "calendar";
+          else if (route.name === "Prova Al") iconName = "calendar";
           else if (route.name === "Hesabım") iconName = "user";
 
           if (route.name === "Bize Sor") {
@@ -96,11 +96,11 @@ export default function Layout() {
       />
       <Tab.Screen name="Bize Sor" component={AskUsModal} />
       <Tab.Screen
-        name="Prova Oluştur"
+        name="Prova Al"
         component={AppointmentCardScreen}
         listeners={({ navigation }) => ({
           tabPress: () => {
-            navigation.navigate("Prova Oluştur" as never, { goToUrl: null } as never);
+            navigation.navigate("Prova Al" as never, { goToUrl: null } as never);
           },
         })}
       />

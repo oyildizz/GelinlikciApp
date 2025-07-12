@@ -41,9 +41,9 @@ export default function HomeScreen() {
           ref={webViewRef}
           source={{ uri: 'https://angelhousewedding.com/' }}
           style={{ flex: 1 }}
-          sharedCookiesEnabled={true}
+          sharedCookiesEnabled={false}
           javaScriptEnabled={true}
-          domStorageEnabled={true}
+          domStorageEnabled={false}
           cacheEnabled={true}
           originWhitelist={['*']}
           startInLoadingState={true}

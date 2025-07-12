@@ -13,7 +13,7 @@ import {
   Image,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { addDoc, collection, getDocs, query, orderBy, where } from "firebase/firestore";
+import { addDoc, collection, getDocs, query, orderBy, where,updateDoc,doc } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import * as Notifications from "expo-notifications";
 import { WebView } from "react-native-webview";
@@ -21,6 +21,8 @@ import { WebView } from "react-native-webview";
 import { useFocusEffect, useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useAuth } from "../context/AuthContext";
+import { findNodeHandle } from 'react-native';
+import { UIManager } from 'react-native';
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { getDeviceId } from "../utils/getDeviceId";
@@ -34,6 +36,8 @@ type ProvaKartiNavigationProp = NativeStackNavigationProp<RootStackParamList, "P
 
 const screenWidth = Dimensions.get("window").width;
 
+
+
 const saatSecenekleri = ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
 
 export function RandevuForm() {
@@ -45,7 +49,7 @@ export function RandevuForm() {
   const [showDate, setShowDate] = useState(false);
   const [saat, setSaat] = useState("10:00");
 
-
+const [editingId, setEditingId] = useState<string | null>(null);
 
   const [notlar, setNotlar] = useState("");
   const [onay, setOnay] = useState(false);
@@ -57,6 +61,8 @@ export function RandevuForm() {
   bugun.setHours(0, 0, 0, 0);
 
 
+const scrollViewRef = useRef<ScrollView>(null);
+const formStartRef = useRef<View>(null);
 
 
  // Tarihler
@@ -86,6 +92,42 @@ export function RandevuForm() {
   const handleShowDate = (key: string) => {
     setShowDatePicker((prev) => ({ ...prev, [key]: true }));
   };
+
+const handleEditRandevu = (randevu: any) => {
+  setName(randevu.name);
+  setPhone(randevu.phone);
+  setEmail(randevu.email);
+  setTarih1(new Date(randevu.tarih1));
+  setSaat1(randevu.saat1);
+  setTarih2(new Date(randevu.tarih2));
+  setSaat2(randevu.saat2);
+  setTeslimTarihi(new Date(randevu.teslimTarihi));
+  setTeslimSaat(randevu.teslimSaat);
+  setNotlar(randevu.notlar || "");
+  setEditingId(randevu.id); // Yeni bir state: editingId
+
+  // ✨ Yalnızca formun başladığı yere kaydır
+
+  // Küçük delay ile scroll fonksiyonunu çağır
+  setTimeout(() => {
+    const scrollViewNode = findNodeHandle(scrollViewRef.current);
+
+    if (formStartRef.current && scrollViewNode) {
+   UIManager.measureLayout(
+  findNodeHandle(formStartRef.current)!,
+  scrollViewNode,
+  () => {
+    console.log("scroll hatası oldu");
+  },
+  (x, y) => {
+    scrollViewRef.current?.scrollTo({ y, animated: true });
+  }
+);
+    }
+  }, 300);
+
+
+};
 
   const handleDateChange = (key: string, event: any, selected?: Date) => {
     if (selected) {
@@ -125,6 +167,7 @@ const getBildirimZamani = (tarih: Date, saat: string) => {
         setActiveWebUrl(null);
       }
        resetForm();
+         setEditingId(null); 
     }, [routeParams?.goToUrl])
   );
 
@@ -181,7 +224,7 @@ const randevulariYukle = async () => {
 
     setRandevular(randevuListesi);
   } catch (error) {
-    console.error("Randevular çekilirken hata:", error);
+    console.error("Provalar çekilirken hata:", error);
   } finally {
     setIsLoading(false);
   }
@@ -242,30 +285,56 @@ const handleSubmit = async () => {
   const deviceId = await getDeviceId();
 
   try {
-    await addDoc(collection(db, "provaRandevular"), {
-      name,
-      phone,
-      email,
-      tarih1: tarih1.toISOString().split("T")[0],
-      saat1,
-      tarih2: tarih2.toISOString().split("T")[0],
-      saat2,
-      teslimTarihi: teslimTarihi.toISOString().split("T")[0],
-      teslimSaat,
-      notlar,
-      createdAt: new Date(),
-      deviceId, // 🔥 Bu önemli!
-    });
+    if (editingId) {
+      // 🔄 Güncelleme modu
+      const randevuRef = doc(db, "provaRandevular", editingId);
+      await updateDoc(randevuRef, {
+        name,
+        phone,
+        email,
+        tarih1: tarih1.toISOString().split("T")[0],
+        saat1,
+        tarih2: tarih2.toISOString().split("T")[0],
+        saat2,
+        teslimTarihi: teslimTarihi.toISOString().split("T")[0],
+        teslimSaat,
+        notlar,
+        updatedAt: new Date(),
+        deviceId,
+      });
+
+      Alert.alert("Başarılı", "Prova randevusu güncellendi!");
+      setEditingId(null);
+    } else {
+      // ➕ Yeni kayıt modu
+      await addDoc(collection(db, "provaRandevular"), {
+        name,
+        phone,
+        email,
+        tarih1: tarih1.toISOString().split("T")[0],
+        saat1,
+        tarih2: tarih2.toISOString().split("T")[0],
+        saat2,
+        teslimTarihi: teslimTarihi.toISOString().split("T")[0],
+        teslimSaat,
+        notlar,
+        createdAt: new Date(),
+        deviceId,
+      });
+
+      Alert.alert("Başarılı", "Provanız oluşturuldu!");
+    }
 
     await randevulariYukle();
     await bildirimGonder();
-    Alert.alert("Başarılı", "Randevunuz oluşturuldu!");
     resetForm();
+
   } catch (error) {
-    console.error("Randevu kaydı sırasında hata:", error);
-    Alert.alert("Hata", "Randevu kaydı sırasında bir hata oluştu.");
+    console.error("Prova kaydı sırasında hata:", error);
+    Alert.alert("Hata", "Prova kaydı sırasında bir hata oluştu.");
   }
 };
+
 
 
    const resetForm = () => {
@@ -284,21 +353,6 @@ const handleSubmit = async () => {
     setShowDatePicker({ tarih1: false, tarih2: false, teslim: false });
   };
   
-
-  // if (!user) {
-  //   return (
-  //     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-  //       <Text style={{ fontSize: 16, color: "#444", textAlign: "center", marginBottom: 20 }}>
-  //         Prova randevusu almak için lütfen giriş yapınız.
-  //       </Text>
-  //       <Button
-  //         title="Giriş Yap"
-  //         onPress={() => navigation.setParams({ goToUrl: "https://angelhousewedding.com/uye-girisi/" })}
-  //       />
-  //     </View>
-  //   );
-  // }
-
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       {activeWebUrl ? (
@@ -306,12 +360,13 @@ const handleSubmit = async () => {
           ref={webViewRef}
           source={{ uri: activeWebUrl }}
           style={{ flex: 1 }}
-          sharedCookiesEnabled={true}
+          sharedCookiesEnabled={false}
           javaScriptEnabled={true}
-          domStorageEnabled={true}
+          domStorageEnabled={false}
         />
       ) : (
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView ref={scrollViewRef}
+        contentContainerStyle={styles.scrollContainer}>
           {/* <View style={styles.breadcrumbContainer}>
             <Text style={styles.breadcrumbText}>
               <Text
@@ -335,10 +390,11 @@ const handleSubmit = async () => {
   <Text style={{ color: "#888", textAlign: "center", fontSize: 14, paddingBottom: 20 }}>
             Prova tarih değişikliğini, firmayı arayarak onay almanız gerekmektedir.
           </Text>
-
+   <View ref={formStartRef} /> 
           <Text style={{ color: "#5897a3", fontWeight: "bold", fontSize: 18, paddingBottom: 20 }}>
-            Prova Randevusu Al
+            Prova Kartı Oluştur
           </Text>
+  
           <View style={styles.innerContainer}>
             <Text style={styles.label}>
               Adınız ve Soyadınız <Text style={styles.required}>*</Text>
@@ -452,17 +508,21 @@ const handleSubmit = async () => {
             </View>
 
             <View style={styles.buttonContainer}>
-              <Button color="#5897a3" title="Randevu Al" onPress={handleSubmit} />
-            </View>
+  <Button
+    color="#5897a3"
+    title={editingId ? "Prova Güncelle" : "Prova Oluştur"}
+    onPress={handleSubmit}
+  />
+</View>
           </View>
        <Text style={{ color: '#5897a3', fontWeight: 'bold', fontSize: 18, paddingTop: 30, paddingBottom: 10 }}>
-  Oluşturulan Randevular
+  Oluşturulan Provalar
 </Text>
 
 {isLoading ? (
   <Text>Yükleniyor...</Text>
 ) : randevular.length === 0 ? (
-  <Text>Henüz randevu oluşturulmamış.</Text>
+  <Text>Henüz prova oluşturulmamış.</Text>
 ) : (
 
   <View style={styles.randevuListContainer}>
@@ -493,6 +553,9 @@ const handleSubmit = async () => {
           <Text style={styles.cardValue}>{item.notlar}</Text>
         </View>
       ) : null}
+      <TouchableOpacity onPress={() => handleEditRandevu(item)}>
+  <Text style={{ color: '#5897a3', marginTop: 10 }}>Düzenle</Text>
+</TouchableOpacity>
     </View>
   ))}
 </View>
