@@ -1,119 +1,150 @@
-import React, { useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+// HomeScreen.tsx (Basit JSON tabanlı promosyon sistemi)
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { WebView } from 'react-native-webview';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import type { WebView as WebViewType } from 'react-native-webview';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import SimplePromoCodeModal from '../../app/(tabs)/SimplePromoCodeModal';
+import SimplePromoCodeService from '../utils/SimplePromoCodeService';
 
 export default function HomeScreen() {
   const webViewRef = useRef<WebViewType>(null);
   const route = useRoute();
   const routeParams = route.params as { goToUrl?: string } | undefined;
+  const [isLoading, setIsLoading] = useState(true);
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [isPromoCheckComplete, setIsPromoCheckComplete] = useState(false);
 
-  const [hasError, setHasError] = useState(false);
-  const [webViewKey, setWebViewKey] = useState(0);
 
-  useFocusEffect(() => {
-    if (routeParams?.goToUrl && webViewRef.current) {
-      webViewRef.current.injectJavaScript(`
-        window.location.href = '${routeParams.goToUrl}';
-        true;
-      `);
+  const handleLoadStart = useCallback(() => {
+    setIsLoading(true);
+  }, []);
+
+  const handleLoadEnd = useCallback(() => {
+    setIsLoading(false);
+  }, []);
+
+  // İlk açılış kontrolü
+  useEffect(() => {
+    checkFirstTime();
+    
+    // Development için - eğer test etmek istiyorsanız
+    // SimplePromoCodeService.clearAllData(); // Bu satırı uncomment edin
+  }, []);
+useEffect(() => {
+  console.log("Modal visible state:", showPromoModal);
+}, [showPromoModal]);
+
+  const checkFirstTime = async () => {
+    try {
+      await AsyncStorage.clear();
+
+      const hasSeenPromo = await AsyncStorage.getItem('has_seen_promo_modal');
+      console.log('hasSeenPromo:', hasSeenPromo);
+      if (!hasSeenPromo) {
+        // İlk kez açılıyor, mevcut kod var mı kontrol et
+        const stats = await SimplePromoCodeService.getStats();
+        console.log('Stats:', stats);
+        console.log("Kalan kod:", stats.availableCodes);
+
+
+        if (stats.availableCodes > 0) {
+          // Kodlar mevcut, modal göster
+          setTimeout(() => {
+            console.log("Modal açılıyor...");
+            setShowPromoModal(true);
+          }, 2000);
+        } else {
+          // Kodlar tükendi
+          console.log('Tüm promosyon kodları tükendi');
+          setTimeout(() => {
+            Alert.alert(
+              'Bilgilendirme',
+              'Promosyon kodları tükendi. Yeni kampanyalarımızdan haberdar olmak için bizi takip edin!',
+              [{ text: 'Tamam' }]
+            );
+          }, 2000);
+        }
+      }
+    } catch (error) {
+      console.error('İlk açılış kontrolü hatası:', error);
     }
-  });
-
-  const retry = () => {
-    setHasError(false);
-    setWebViewKey((prev) => prev + 1);
+     finally {
+    setIsPromoCheckComplete(true); // kontrol tamamlandı
+  }
   };
 
+  const handleClosePromoModal = async () => {
+    try {
+      setShowPromoModal(false);
+      // Modal gösterildi olarak işaretle
+      await AsyncStorage.setItem('has_seen_promo_modal', 'true');
+    } catch (error) {
+      console.error('Modal kapatma hatası:', error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      if (routeParams?.goToUrl && webViewRef.current) {
+        webViewRef.current.injectJavaScript(`
+          window.location.href = '${routeParams.goToUrl}';
+          true;
+        `);
+      }
+    }, [routeParams?.goToUrl])
+  );
+
   return (
-    <>
-      {!hasError && (
-        <WebView
-          key={webViewKey}
-          ref={webViewRef}
-          source={{ uri: 'https://angelhousewedding.com/' }}
-          style={{ flex: 1 }}
-          sharedCookiesEnabled={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={false}
-          cacheEnabled={true}
-          originWhitelist={['*']}
-          startInLoadingState={true}
-          onError={() => setHasError(true)}
-          renderError={() => <View />}
-          renderLoading={() => (
-            <View style={styles.loading}>
-              <ActivityIndicator size="large" color="#5897a3" />
-            </View>
-          )}
-        />
+    <View style={styles.container}>
+      <WebView
+        ref={webViewRef}
+        source={{ uri: 'https://angelhousewedding.com/' }}
+        style={styles.webview}
+        sharedCookiesEnabled={true}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        cacheEnabled={true}
+        startInLoadingState={false}
+        onLoadStart={handleLoadStart}
+        onLoadEnd={handleLoadEnd}
+      />
+      
+      {isLoading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#104438" />
+        </View>
       )}
 
-      <Modal visible={hasError} transparent animationType="fade">
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>
-              İnternet bağlantınızı kontrol edin ve tekrar deneyin.
-            </Text>
-            <TouchableOpacity onPress={retry} style={styles.retryButton}>
-              <Text style={styles.retryButtonText}>Tekrar Dene</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </>
+      {/* Basit Promosyon Kodu Modal */}
+     {isPromoCheckComplete && (
+  <SimplePromoCodeModal
+    visible={showPromoModal}
+    onClose={handleClosePromoModal}
+  />
+)}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  loading: {
+  container: {
     flex: 1,
+    backgroundColor: '#104438',
+  },
+  webview: {
+    flex: 1,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 14,
-    color: '#555',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: '80%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
-    elevation: 5,
-  },
-  modalText: {
-    fontSize: 16,
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  retryButton: {
-    backgroundColor: '#5897a3',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 6,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    backgroundColor: 'rgba(16, 68, 56, 0.8)',
   },
 });
