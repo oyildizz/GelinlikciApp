@@ -1,4 +1,4 @@
-// components/AdminStatsComponent.tsx - JSON tabanlı istatistikler
+// components/AdminStatsComponent.tsx - Düzeltilmiş versiyon
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -19,18 +19,20 @@ interface AdminStatsComponentProps {
 }
 
 const AdminStatsComponent: React.FC<AdminStatsComponentProps> = ({ visible, onClose }) => {
- const [stats, setStats] = useState<{
-  totalCodes: number;
-  usedCodes: number;
-  availableCodes: number;
-  userHasCode: boolean;
-  userCode?: string;
-}>({
-  totalCodes: 200,
-  usedCodes: 0,
-  availableCodes: 200,
-  userHasCode: false,
-});
+  const [stats, setStats] = useState<{
+    totalCodes: number;
+    usedCodes: number;
+    availableCodes: number;
+    userHasCode: boolean;
+    userCode?: string;
+    remainingQuota: number;
+  }>({
+    totalCodes: 200,
+    usedCodes: 0,
+    availableCodes: 100,
+    userHasCode: false,
+    remainingQuota: 100,
+  });
 
   const [loading, setLoading] = useState(false);
 
@@ -56,7 +58,7 @@ const AdminStatsComponent: React.FC<AdminStatsComponentProps> = ({ visible, onCl
   const resetAllData = () => {
     Alert.alert(
       'Tüm Verileri Sıfırla',
-      'Bu işlem tüm kullanılan kodları sıfırlayacak ve tüm kodlar tekrar kullanılabilir hale gelecek. Emin misiniz?',
+      'Bu işlem tüm kullanılan kodları, cihaz kayıtlarını ve modal durumunu sıfırlayacak. Tüm kodlar tekrar kullanılabilir hale gelecek. Emin misiniz?',
       [
         { text: 'İptal', style: 'cancel' },
         {
@@ -76,7 +78,30 @@ const AdminStatsComponent: React.FC<AdminStatsComponentProps> = ({ visible, onCl
     );
   };
 
-  const usagePercentage = stats.totalCodes > 0 
+  const resetModalStatus = () => {
+    Alert.alert(
+      'Modal Durumunu Sıfırla',
+      'Bu işlem sadece modal gösterim durumunu sıfırlar. Promosyon kodu verileri etkilenmez.',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Sıfırla',
+          style: 'default',
+          onPress: async () => {
+            try {
+              await SimplePromoCodeService.resetModalStatus();
+              Alert.alert('Başarılı', 'Modal durumu sıfırlandı. Uygulama yeniden başlatıldığında modal görünecek.');
+            } catch (error) {
+              Alert.alert('Hata', 'Modal durumu sıfırlanırken bir hata oluştu.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const quotaPercentage = Math.round((stats.usedCodes / 100) * 100);
+  const totalUsagePercentage = stats.totalCodes > 0 
     ? Math.round((stats.usedCodes / stats.totalCodes) * 100) 
     : 0;
 
@@ -106,6 +131,33 @@ const AdminStatsComponent: React.FC<AdminStatsComponentProps> = ({ visible, onCl
             />
           }
         >
+          {/* Kota Durumu */}
+          <View style={styles.quotaCard}>
+            <Text style={styles.quotaTitle}>🎯 İlk 100 Kişi Kotası</Text>
+            <View style={styles.quotaContent}>
+              <Text style={styles.quotaNumber}>
+                {stats.usedCodes} / 100
+              </Text>
+              <Text style={styles.quotaSubtext}>
+                Kalan: {stats.remainingQuota}
+              </Text>
+            </View>
+            <View style={styles.progressBarContainer}>
+              <View style={styles.progressBar}>
+                <View 
+                  style={[
+                    styles.progressFill, 
+                    { 
+                      width: `${quotaPercentage}%`,
+                      backgroundColor: quotaPercentage >= 90 ? '#e74c3c' : quotaPercentage >= 70 ? '#f39c12' : '#104438'
+                    }
+                  ]} 
+                />
+              </View>
+              <Text style={styles.progressText}>{quotaPercentage}%</Text>
+            </View>
+          </View>
+
           {/* Ana İstatistikler */}
           <View style={styles.statsGrid}>
             <View style={[styles.statCard, styles.totalCard]}>
@@ -119,35 +171,16 @@ const AdminStatsComponent: React.FC<AdminStatsComponentProps> = ({ visible, onCl
               <Text style={[styles.statNumber, { color: '#e74c3c' }]}>
                 {stats.usedCodes}
               </Text>
-              <Text style={styles.statLabel}>Kullanılan</Text>
+              <Text style={styles.statLabel}>Dağıtılan</Text>
             </View>
 
             <View style={[styles.statCard, styles.availableCard]}>
               <Feather name="gift" size={30} color="#27ae60" />
               <Text style={[styles.statNumber, { color: '#27ae60' }]}>
-                {stats.availableCodes}
+                {stats.remainingQuota}
               </Text>
-              <Text style={styles.statLabel}>Mevcut</Text>
+              <Text style={styles.statLabel}>Kalan Kota</Text>
             </View>
-          </View>
-
-          {/* Kullanım Oranı */}
-          <View style={styles.progressCard}>
-            <Text style={styles.progressTitle}>Kullanım Oranı</Text>
-            <View style={styles.progressBarContainer}>
-              <View style={styles.progressBar}>
-                <View 
-                  style={[
-                    styles.progressFill, 
-                    { width: `${usagePercentage}%` }
-                  ]} 
-                />
-              </View>
-              <Text style={styles.progressText}>{usagePercentage}%</Text>
-            </View>
-            <Text style={styles.progressSubtext}>
-              {stats.usedCodes} / {stats.totalCodes} kod kullanıldı
-            </Text>
           </View>
 
           {/* Durum Bilgileri */}
@@ -156,20 +189,10 @@ const AdminStatsComponent: React.FC<AdminStatsComponentProps> = ({ visible, onCl
             
             <View style={styles.statusRow}>
               <Feather 
-                name={stats.availableCodes > 50 ? "check-circle" : stats.availableCodes > 10 ? "alert-circle" : "x-circle"} 
+                name={stats.remainingQuota > 20 ? "check-circle" : stats.remainingQuota > 5 ? "alert-circle" : "x-circle"} 
                 size={20} 
-                color={stats.availableCodes > 50 ? "#27ae60" : stats.availableCodes > 10 ? "#f39c12" : "#e74c3c"} 
+                color={stats.remainingQuota > 20 ? "#27ae60" : stats.remainingQuota > 5 ? "#f39c12" : "#e74c3c"} 
               />
-              <View style={styles.statusTextContainer}>
-                <Text style={styles.statusLabel}>Kod Durumu</Text>
-                <Text style={styles.statusValue}>
-                  {stats.availableCodes > 50 
-                    ? "Bol miktarda mevcut" 
-                    : stats.availableCodes > 10 
-                      ? "Azalıyor, yenileme gerekebilir" 
-                      : "Kritik seviye, acil yenileme gerekli"}
-                </Text>
-              </View>
             </View>
 
             <View style={styles.statusRow}>
@@ -187,32 +210,54 @@ const AdminStatsComponent: React.FC<AdminStatsComponentProps> = ({ visible, onCl
                 </Text>
               </View>
             </View>
+
+            <View style={styles.statusRow}>
+              <Feather 
+                name="database" 
+                size={20} 
+                color="#3498db" 
+              />
+              <View style={styles.statusTextContainer}>
+                <Text style={styles.statusLabel}>Toplam Kullanım</Text>
+                <Text style={styles.statusValue}>
+                  {stats.usedCodes} / {stats.totalCodes} (%{totalUsagePercentage})
+                </Text>
+              </View>
+            </View>
           </View>
 
           {/* Öneriler */}
           <View style={styles.recommendationsCard}>
             <Text style={styles.recommendationsTitle}>💡 Öneriler</Text>
             
-            {stats.availableCodes < 20 && (
+            {stats.remainingQuota <= 0 && (
               <View style={styles.recommendationItem}>
                 <Text style={styles.recommendationText}>
-                  • Kodlar azalıyor! Yeni kodlar eklemeyi düşünün.
+                  • İlk 100 kişi kotası doldu! Yeni kullanıcılara modal gösterilmeyecek.
                 </Text>
               </View>
             )}
             
-            {usagePercentage > 80 && (
+            {stats.remainingQuota > 0 && stats.remainingQuota < 10 && (
               <View style={styles.recommendationItem}>
                 <Text style={styles.recommendationText}>
-                  • Yüksek kullanım oranı! Kampanya başarılı gidiyor.
+                  • Kota bitmek üzere! Son {stats.remainingQuota} kod kaldı.
                 </Text>
               </View>
             )}
             
-            {stats.availableCodes > 150 && (
+            {quotaPercentage > 80 && stats.remainingQuota > 0 && (
               <View style={styles.recommendationItem}>
                 <Text style={styles.recommendationText}>
-                  • Kodlar bol miktarda. Kampanyayı daha aktif tanıtabilirsiniz.
+                  • Yüksek talep var! Kampanya başarılı gidiyor.
+                </Text>
+              </View>
+            )}
+            
+            {stats.remainingQuota > 50 && (
+              <View style={styles.recommendationItem}>
+                <Text style={styles.recommendationText}>
+                  • Kota bol miktarda. Kampanyayı daha aktif tanıtabilirsiniz.
                 </Text>
               </View>
             )}
@@ -232,6 +277,14 @@ const AdminStatsComponent: React.FC<AdminStatsComponentProps> = ({ visible, onCl
             </TouchableOpacity>
 
             <TouchableOpacity 
+              style={[styles.actionButton, styles.warningButton]}
+              onPress={resetModalStatus}
+            >
+              <Feather name="eye" size={20} color="white" />
+              <Text style={styles.actionButtonText}>Modal Durumunu Sıfırla</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
               style={[styles.actionButton, styles.dangerButton]}
               onPress={resetAllData}
             >
@@ -243,10 +296,10 @@ const AdminStatsComponent: React.FC<AdminStatsComponentProps> = ({ visible, onCl
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>
-              Angel House Wedding - Promosyon Sistemi v1.0
+              Angel House Wedding - Promosyon Sistemi v2.0
             </Text>
             <Text style={styles.footerSubtext}>
-              Son güncelleme: {new Date().toLocaleString('tr-TR')}
+              İlk 100 Kişi Sistemi - Son güncelleme: {new Date().toLocaleString('tr-TR')}
             </Text>
           </View>
         </ScrollView>
@@ -280,6 +333,33 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+  },
+  quotaCard: {
+    backgroundColor: '#104438',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  quotaTitle: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  quotaContent: {
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  quotaNumber: {
+    color: 'white',
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  quotaSubtext: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    marginTop: 5,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -322,49 +402,27 @@ const styles = StyleSheet.create({
     marginTop: 5,
     textAlign: 'center',
   },
-  progressCard: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  progressTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 15,
-  },
   progressBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    width: '100%',
   },
   progressBar: {
     flex: 1,
     height: 10,
-    backgroundColor: '#ecf0f1',
+    backgroundColor: 'rgba(255,255,255,0.3)',
     borderRadius: 5,
     marginRight: 10,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#104438',
     borderRadius: 5,
   },
   progressText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#104438',
+    color: 'white',
     minWidth: 45,
-  },
-  progressSubtext: {
-    fontSize: 14,
-    color: '#666',
   },
   statusCard: {
     backgroundColor: 'white',
@@ -450,6 +508,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
   },
+  warningButton: {
+    backgroundColor: '#f39c12',
+  },
   dangerButton: {
     backgroundColor: '#e74c3c',
   },
@@ -474,5 +535,3 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
 });
-
-export default AdminStatsComponent;

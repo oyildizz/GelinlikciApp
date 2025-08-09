@@ -14,26 +14,79 @@ class SimplePromoCodeService {
   private static readonly USER_PROMO_KEY = 'user_promo_code';
   private static readonly USED_CODES_KEY = 'used_promo_codes';
   private static readonly DEVICE_ID_KEY = 'device_unique_id';
+  private static readonly GLOBAL_USED_CODES_KEY = 'global_used_promo_codes'; // Global kullanılan kodlar
+  private static readonly DEVICE_REGISTRY_KEY = 'device_registry'; // Cihaz kayıt listesi
 
-  // Basit cihaz ID oluşturucu
+  // Basit ama kalıcı cihaz ID oluşturucu
   static async getDeviceId(): Promise<string> {
     try {
       let deviceId = await AsyncStorage.getItem(this.DEVICE_ID_KEY);
       
       if (!deviceId) {
-        // Basit unique ID oluştur
-        deviceId = `WED_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        // Benzersiz ve kalıcı ID oluştur
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 15);
+        deviceId = `WED_${timestamp}_${random}`;
+        
         await AsyncStorage.setItem(this.DEVICE_ID_KEY, deviceId);
       }
       
       return deviceId;
     } catch (error) {
       console.error('Device ID oluşturma hatası:', error);
-      return `WED_${Date.now()}`;
+      return `WED_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     }
   }
 
-  // Kullanılan kodları getir
+  // Cihaz kayıt listesini getir
+  static async getDeviceRegistry(): Promise<string[]> {
+    try {
+      const registry = await AsyncStorage.getItem(this.DEVICE_REGISTRY_KEY);
+      return registry ? JSON.parse(registry) : [];
+    } catch (error) {
+      console.error('Cihaz kayıt listesi okuma hatası:', error);
+      return [];
+    }
+  }
+
+  // Cihazı kayıt listesine ekle
+  static async addToDeviceRegistry(deviceId: string): Promise<void> {
+    try {
+      const registry = await this.getDeviceRegistry();
+      if (!registry.includes(deviceId)) {
+        registry.push(deviceId);
+        await AsyncStorage.setItem(this.DEVICE_REGISTRY_KEY, JSON.stringify(registry));
+      }
+    } catch (error) {
+      console.error('Cihaz kayıt ekleme hatası:', error);
+    }
+  }
+
+  // Global kullanılan kodları getir
+  static async getGlobalUsedCodes(): Promise<string[]> {
+    try {
+      const usedCodes = await AsyncStorage.getItem(this.GLOBAL_USED_CODES_KEY);
+      return usedCodes ? JSON.parse(usedCodes) : [];
+    } catch (error) {
+      console.error('Global kullanılan kodları okuma hatası:', error);
+      return [];
+    }
+  }
+
+  // Global kullanılan kod listesine ekle
+  static async addGlobalUsedCode(code: string): Promise<void> {
+    try {
+      const usedCodes = await this.getGlobalUsedCodes();
+      if (!usedCodes.includes(code)) {
+        usedCodes.push(code);
+        await AsyncStorage.setItem(this.GLOBAL_USED_CODES_KEY, JSON.stringify(usedCodes));
+      }
+    } catch (error) {
+      console.error('Global kullanılan kod ekleme hatası:', error);
+    }
+  }
+
+  // Kullanıcının lokal kullanılan kodlarını getir (eski sistem ile uyumluluk)
   static async getUsedCodes(): Promise<string[]> {
     try {
       const usedCodes = await AsyncStorage.getItem(this.USED_CODES_KEY);
@@ -44,16 +97,19 @@ class SimplePromoCodeService {
     }
   }
 
-  // Kullanılan kod listesine ekle
-  static async addUsedCode(code: string): Promise<void> {
+  // Bu cihazın daha önce kod alıp almadığını kontrol et
+  static async hasDeviceReceivedCode(): Promise<boolean> {
     try {
-      const usedCodes = await this.getUsedCodes();
-      if (!usedCodes.includes(code)) {
-        usedCodes.push(code);
-        await AsyncStorage.setItem(this.USED_CODES_KEY, JSON.stringify(usedCodes));
-      }
+      const deviceId = await this.getDeviceId();
+      const registry = await this.getDeviceRegistry();
+      
+      // Ayrıca kullanıcının lokal kaydı var mı da kontrol et
+      const userPromo = await this.getUserPromoCode();
+      
+      return registry.includes(deviceId) || !!userPromo;
     } catch (error) {
-      console.error('Kullanılan kod ekleme hatası:', error);
+      console.error('Cihaz kontrol hatası:', error);
+      return false;
     }
   }
 
@@ -71,18 +127,32 @@ class SimplePromoCodeService {
   // Kullanıcıya yeni promosyon kodu ata
   static async assignPromoCode(): Promise<AssignedPromoCode | null> {
     try {
-      // Zaten kod var mı kontrol et
-      const existingCode = await this.getUserPromoCode();
-      if (existingCode) {
-        return existingCode;
+      // Cihaz ID al
+      const deviceId = await this.getDeviceId();
+
+      // Bu cihaz daha önce kod aldı mı kontrol et
+      const hasReceivedCode = await this.hasDeviceReceivedCode();
+      if (hasReceivedCode) {
+        // Daha önce aldığı kodu getir
+        const existingCode = await this.getUserPromoCode();
+        if (existingCode) {
+          console.log('Cihaz daha önce kod almış, mevcut kod döndürülüyor:', existingCode.code);
+          return existingCode;
+        }
       }
 
-      // Kullanılan kodları al
-      const usedCodes = await this.getUsedCodes();
+      // Global kullanılan kodları al
+      const globalUsedCodes = await this.getGlobalUsedCodes();
+      
+      // İlk 100 kod kontrolü
+      if (globalUsedCodes.length >= 100) {
+        console.warn('İlk 100 promosyon kodu dağıtıldı!');
+        return null;
+      }
       
       // Kullanılmayan kodları filtrele
       const availableCodes = promoCodesData.promoCodes.filter(
-          (        code: string) => !usedCodes.includes(code)
+        (code: string) => !globalUsedCodes.includes(code)
       );
 
       if (availableCodes.length === 0) {
@@ -94,9 +164,6 @@ class SimplePromoCodeService {
       const randomIndex = Math.floor(Math.random() * availableCodes.length);
       const selectedCode = availableCodes[randomIndex];
 
-      // Cihaz ID al
-      const deviceId = await this.getDeviceId();
-
       // Yeni promosyon kodu objesi oluştur
       const assignedPromo: AssignedPromoCode = {
         code: selectedCode,
@@ -106,16 +173,33 @@ class SimplePromoCodeService {
         discountPercentage: promoCodesData.discountPercentage
       };
 
-      // Kullanıcıya ata ve kullanılan listesine ekle
+      // Kullanıcıya ata, global listesine ve cihaz registry'sine ekle
       await AsyncStorage.setItem(this.USER_PROMO_KEY, JSON.stringify(assignedPromo));
-      await this.addUsedCode(selectedCode);
+      await this.addGlobalUsedCode(selectedCode);
+      await this.addToDeviceRegistry(deviceId);
 
-      console.log(`Promosyon kodu atandı: ${selectedCode}`);
+      // Eski sistem ile uyumluluk için lokal listeye de ekle
+      await this.addLocalUsedCode(selectedCode);
+
+      console.log(`Promosyon kodu atandı: ${selectedCode} (${globalUsedCodes.length + 1}/100)`);
       return assignedPromo;
 
     } catch (error) {
       console.error('Promosyon kodu atama hatası:', error);
       return null;
+    }
+  }
+
+  // Lokal kullanılan kod listesine ekle (eski sistem uyumluluğu)
+  private static async addLocalUsedCode(code: string): Promise<void> {
+    try {
+      const usedCodes = await this.getUsedCodes();
+      if (!usedCodes.includes(code)) {
+        usedCodes.push(code);
+        await AsyncStorage.setItem(this.USED_CODES_KEY, JSON.stringify(usedCodes));
+      }
+    } catch (error) {
+      console.error('Lokal kullanılan kod ekleme hatası:', error);
     }
   }
 
@@ -140,25 +224,34 @@ class SimplePromoCodeService {
     availableCodes: number;
     userHasCode: boolean;
     userCode?: string;
+    remainingQuota: number; // İlk 100'den kalan
   }> {
     try {
-      const usedCodes = await this.getUsedCodes();
+      const globalUsedCodes = await this.getGlobalUsedCodes();
       const userPromo = await this.getUserPromoCode();
+      const deviceRegistry = await this.getDeviceRegistry();
+      
+      const totalCodes = promoCodesData.promoCodes.length;
+      const usedCodesCount = globalUsedCodes.length;
+      const remainingQuota = Math.max(0, 100 - usedCodesCount);
+      const availableCodes = Math.min(totalCodes - usedCodesCount, remainingQuota);
       
       return {
-        totalCodes: promoCodesData.promoCodes.length,
-        usedCodes: usedCodes.length,
-        availableCodes: promoCodesData.promoCodes.length - usedCodes.length,
+        totalCodes,
+        usedCodes: usedCodesCount,
+        availableCodes,
         userHasCode: !!userPromo,
-        userCode: userPromo?.code
+        userCode: userPromo?.code,
+        remainingQuota,
       };
     } catch (error) {
       console.error('İstatistik alma hatası:', error);
       return {
-        totalCodes: 200,
+        totalCodes: promoCodesData.promoCodes?.length || 200,
         usedCodes: 0,
-        availableCodes: 200,
-        userHasCode: false
+        availableCodes: 100,
+        userHasCode: false,
+        remainingQuota: 100,
       };
     }
   }
@@ -170,11 +263,23 @@ class SimplePromoCodeService {
         this.USER_PROMO_KEY,
         this.USED_CODES_KEY,
         this.DEVICE_ID_KEY,
+        this.GLOBAL_USED_CODES_KEY,
+        this.DEVICE_REGISTRY_KEY,
         'has_seen_promo_modal'
       ]);
       console.log('Tüm promosyon verileri temizlendi');
     } catch (error) {
       console.error('Veri temizleme hatası:', error);
+    }
+  }
+
+  // Debug: Sadece modal gösterim durumunu sıfırla
+  static async resetModalStatus(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem('has_seen_promo_modal');
+      console.log('Modal durumu sıfırlandı');
+    } catch (error) {
+      console.error('Modal durum sıfırlama hatası:', error);
     }
   }
 }

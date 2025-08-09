@@ -1,4 +1,4 @@
-// HomeScreen.tsx (Basit JSON tabanlı promosyon sistemi)
+// HomeScreen.tsx (Düzeltilmiş JSON tabanlı promosyon sistemi)
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { WebView } from 'react-native-webview';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
@@ -17,7 +17,6 @@ export default function HomeScreen() {
   const [showPromoModal, setShowPromoModal] = useState(false);
   const [isPromoCheckComplete, setIsPromoCheckComplete] = useState(false);
 
-
   const handleLoadStart = useCallback(() => {
     setIsLoading(true);
   }, []);
@@ -30,57 +29,82 @@ export default function HomeScreen() {
   useEffect(() => {
     checkFirstTime();
     
-    // Development için - eğer test etmek istiyorsanız
-    // SimplePromoCodeService.clearAllData(); // Bu satırı uncomment edin
+    // Development için - test etmek istiyorsanız aşağıdaki satırı uncomment edin
+    // SimplePromoCodeService.clearAllData();
   }, []);
-useEffect(() => {
-  console.log("Modal visible state:", showPromoModal);
-}, [showPromoModal]);
+
+  useEffect(() => {
+    console.log("Modal visible state:", showPromoModal);
+  }, [showPromoModal]);
 
   const checkFirstTime = async () => {
     try {
-      await AsyncStorage.clear();
+      // SADECE TESTİNG İÇİN - production'da kaldırın!
+      // await AsyncStorage.clear();
 
+      console.log('İlk açılış kontrolü başlıyor...');
+      
+      // Modal daha önce gösterilmiş mi kontrol et
       const hasSeenPromo = await AsyncStorage.getItem('has_seen_promo_modal');
       console.log('hasSeenPromo:', hasSeenPromo);
-      if (!hasSeenPromo) {
-        // İlk kez açılıyor, mevcut kod var mı kontrol et
-        const stats = await SimplePromoCodeService.getStats();
-        console.log('Stats:', stats);
-        console.log("Kalan kod:", stats.availableCodes);
+      
+      if (hasSeenPromo) {
+        console.log('Modal daha önce gösterilmiş, atlanıyor...');
+        return;
+      }
 
+      // Bu cihaz daha önce kod almış mı kontrol et
+      const hasDeviceReceivedCode = await SimplePromoCodeService.hasDeviceReceivedCode();
+      console.log('hasDeviceReceivedCode:', hasDeviceReceivedCode);
+      
+      if (hasDeviceReceivedCode) {
+        console.log('Bu cihaz daha önce kod almış, modal gösterilmiyor...');
+        // Modal gösterildi olarak işaretle (çünkü bu cihaz zaten kod almış)
+        await AsyncStorage.setItem('has_seen_promo_modal', 'true');
+        return;
+      }
 
-        if (stats.availableCodes > 0) {
-          // Kodlar mevcut, modal göster
-          setTimeout(() => {
-            console.log("Modal açılıyor...");
-            setShowPromoModal(true);
-          }, 2000);
-        } else {
-          // Kodlar tükendi
-          console.log('Tüm promosyon kodları tükendi');
-          setTimeout(() => {
-            Alert.alert(
-              'Bilgilendirme',
-              'Promosyon kodları tükendi. Yeni kampanyalarımızdan haberdar olmak için bizi takip edin!',
-              [{ text: 'Tamam' }]
-            );
-          }, 2000);
-        }
+      // İstatistikleri kontrol et
+      const stats = await SimplePromoCodeService.getStats();
+      console.log('Stats:', stats);
+      console.log('Kalan kota:', stats.remainingQuota);
+      console.log('Kullanılan kodlar:', stats.usedCodes);
+
+      if (stats.remainingQuota > 0) {
+        // İlk 100 kişi kotası dolmamış, modal göster
+        console.log("Modal gösterilecek...");
+        setTimeout(() => {
+          console.log("Modal açılıyor...");
+          setShowPromoModal(true);
+        }, 2000); // 2 saniye bekle
+      } else {
+        // İlk 100 kişi kotası dolmuş
+        console.log('İlk 100 kişi kotası dolmuş!');
+        setTimeout(() => {
+          Alert.alert(
+            'Kampanya Sona Erdi',
+            'İlk 100 kişiye özel promosyon kodu kampanyamız sona ermiştir. Yeni kampanyalarımızdan haberdar olmak için bizi takip edin!',
+            [{ text: 'Tamam' }]
+          );
+        }, 2000);
+        
+        // Modal gösterildi olarak işaretle
+        await AsyncStorage.setItem('has_seen_promo_modal', 'true');
       }
     } catch (error) {
       console.error('İlk açılış kontrolü hatası:', error);
+    } finally {
+      setIsPromoCheckComplete(true);
     }
-     finally {
-    setIsPromoCheckComplete(true); // kontrol tamamlandı
-  }
   };
 
   const handleClosePromoModal = async () => {
     try {
+      console.log('Modal kapatılıyor...');
       setShowPromoModal(false);
       // Modal gösterildi olarak işaretle
       await AsyncStorage.setItem('has_seen_promo_modal', 'true');
+      console.log('Modal durumu kaydedildi');
     } catch (error) {
       console.error('Modal kapatma hatası:', error);
     }
@@ -118,13 +142,13 @@ useEffect(() => {
         </View>
       )}
 
-      {/* Basit Promosyon Kodu Modal */}
-     {isPromoCheckComplete && (
-  <SimplePromoCodeModal
-    visible={showPromoModal}
-    onClose={handleClosePromoModal}
-  />
-)}
+      {/* Promosyon Kodu Modal - Sadece kontrol tamamlandıktan sonra göster */}
+      {isPromoCheckComplete && (
+        <SimplePromoCodeModal
+          visible={showPromoModal}
+          onClose={handleClosePromoModal}
+        />
+      )}
     </View>
   );
 }
