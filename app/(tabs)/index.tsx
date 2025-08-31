@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from "react";
 import { StyleSheet, View, BackHandler } from "react-native";
 import { WebView } from "react-native-webview";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const [userToken, setUserToken] = useState<string | null>(null);
@@ -33,7 +34,7 @@ export default function HomeScreen() {
   }, [handleBackPress]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <WebView
         source={{
           uri: userToken
@@ -46,7 +47,7 @@ export default function HomeScreen() {
         domStorageEnabled={false} // Tarayıcı depolaması açık
         cacheMode="LOAD_NO_CACHE" // Sayfanın en güncel halini yükle
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

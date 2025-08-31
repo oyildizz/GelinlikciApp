@@ -36,6 +36,7 @@ import { UIManager } from "react-native";
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { getDeviceId } from "../utils/getDeviceId";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RootStackParamList = {
   "Prova Kartı": { goToUrl?: string | null };
@@ -426,7 +427,7 @@ export function RandevuForm() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={['top']}>
       {activeWebUrl ? (
         <WebView
           ref={webViewRef}
@@ -734,7 +735,7 @@ export function RandevuForm() {
           )}
         </ScrollView>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
