@@ -14,3 +14,5 @@ export const getDeviceId = async (): Promise<string> => {
 
   return id;
 };
+
+export default getDeviceId;

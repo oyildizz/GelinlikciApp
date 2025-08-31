@@ -10,3 +10,9 @@ export const registerForPushNotificationsAsync = async (): Promise<string | null
   const token = (await Notifications.getExpoPushTokenAsync()).data;
   return token;
 };
+
+const notificationService = {
+  registerForPushNotificationsAsync,
+};
+
+export default notificationService;

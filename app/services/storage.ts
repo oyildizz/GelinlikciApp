@@ -17,3 +17,10 @@ export const getLocalAppointments = async () => {
   const stored = await AsyncStorage.getItem('localAppointments');
   return stored ? JSON.parse(stored) : [];
 };
+
+const storageService = {
+  saveLocalAppointment,
+  getLocalAppointments,
+};
+
+export default storageService;
