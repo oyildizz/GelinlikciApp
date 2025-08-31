@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
@@ -34,7 +35,7 @@ export default function CreateAppointmentScreen() {
   };
 
   return (
-    <>
+    <SafeAreaView style={{ flex: 1 }}>
       {!hasError && (
         <WebView
           key={webViewKey}
@@ -69,7 +70,7 @@ export default function CreateAppointmentScreen() {
           </View>
         </View>
       </Modal>
-    </>
+    </SafeAreaView>
   );
 }
 

@@ -2,11 +2,11 @@
   "expo": {
     "name": "Angel House Wedding",
     "slug": "angel-house-wedding",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/splash-icon.png",
     "notification": {
-      "icon": "./assets/images/icon.png",
+      "icon": "./assets/images/splash-icon.png",
       "color": "#104438"
     },
     "scheme": "myapp",
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
+        "foregroundImage": "./assets/images/splash-icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.karmeyil.angelhousewedding"
@@ -26,7 +26,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/splash-icon.png"
     },
     "plugins": [
       "expo-router",

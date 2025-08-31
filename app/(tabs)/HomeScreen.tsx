@@ -5,6 +5,7 @@ import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import type { WebView as WebViewType } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import SimplePromoCodeModal from '../../app/(tabs)/SimplePromoCodeModal';
 import SimplePromoCodeService from '../utils/SimplePromoCodeService';
@@ -122,7 +123,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <WebView
         ref={webViewRef}
         source={{ uri: 'https://angelhousewedding.com/' }}
@@ -149,7 +150,7 @@ export default function HomeScreen() {
           onClose={handleClosePromoModal}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
