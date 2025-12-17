@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import type { WebView as WebViewType } from 'react-native-webview';
 import { useAuth } from '../context/AuthContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const AccountScreen = () => {
   const [userToken, setUserToken] = useState<string | null>(null);
@@ -60,7 +61,7 @@ const AccountScreen = () => {
   };
 
   return (
-    <>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {!hasError && (
         <WebView
           key={webViewKey}
@@ -101,11 +102,15 @@ const AccountScreen = () => {
           </View>
         </View>
       </Modal>
-    </>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#104438',
+  },
   loading: {
     flex: 1,
     justifyContent: 'center',

@@ -12,7 +12,7 @@ import { useFocusEffect, useRoute } from '@react-navigation/native';
 import type { WebView as WebViewType } from 'react-native-webview';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function CreateAppointmentScreen() {
+export default function FavorilerimScreen() {
   const webViewRef = useRef<WebViewType>(null);
   const route = useRoute();
   const routeParams = route.params as { goToUrl?: string } | undefined;
@@ -35,12 +35,12 @@ export default function CreateAppointmentScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top', 'bottom']}>
+     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top', 'bottom']}>
       {!hasError && (
         <WebView
           key={webViewKey}
           ref={webViewRef}
-          source={{ uri: 'https://angelhousewedding.com/randevu-al' }}
+          source={{ uri: 'https://angelhousewedding.com/wishlist/' }}
           style={{ flex: 1 }}
           sharedCookiesEnabled={false}
           javaScriptEnabled={true}
@@ -80,11 +80,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 14,
-    color: '#555',
   },
   modalBackdrop: {
     flex: 1,

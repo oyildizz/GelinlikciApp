@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather, FontAwesome } from "@expo/vector-icons";
@@ -7,7 +8,8 @@ import HomeScreen from "./HomeScreen";
 import AppointmentCardScreen from "./AppointmentCardScreen";
 import CreateAppointmentScreen from "./CreateAppointmentScreen";
 import AccountScreen from "./AccountScreen";
-import AskUsModal from "./AskUsModal";
+
+import MyFavourite from "./MyFavourites";
 
 const Tab = createBottomTabNavigator();
 
@@ -45,11 +47,11 @@ export default function Layout() {
 
           if (route.name === "Ana Sayfa") iconName = "home";
           else if (route.name === "Randevu Al") iconName = "file-text";
-          else if (route.name === "Bize Sor") iconName = "message-circle";
+          else if (route.name === "Favorilerim") iconName = "heart";
           else if (route.name === "Prova Al") iconName = "calendar";
           else if (route.name === "Hesabım") iconName = "user";
 
-          if (route.name === "Bize Sor") {
+          if (route.name === "Favorilerim") {
             return (
               <View
                 style={{
@@ -67,7 +69,7 @@ export default function Layout() {
                   elevation: 8,
                 }}
               >
-                <FontAwesome name="comment" size={28} color="black" />
+                <FontAwesome name="heart" size={28} color="black" />
               </View>
             );
           }
@@ -94,7 +96,14 @@ export default function Layout() {
           },
         })}
       />
-      <Tab.Screen name="Bize Sor" component={AskUsModal} />
+      <Tab.Screen 
+        name="Favorilerim" 
+        component={MyFavourite} 
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate("Favorilerim", { goToUrl: "https://angelhousewedding.com/wishlist/" });
+          },
+        })} />
       <Tab.Screen
         name="Prova Al"
         component={AppointmentCardScreen}

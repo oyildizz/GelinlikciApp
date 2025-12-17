@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
@@ -23,6 +24,7 @@ import {
   updateDoc,
   doc,
   deleteDoc,
+  limit
 } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import * as Notifications from "expo-notifications";
@@ -36,6 +38,34 @@ import { UIManager } from "react-native";
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { getDeviceId } from "../utils/getDeviceId";
+// Dosyanın en üstüne import ekleyin
+import { Platform, NativeModules } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+
+// Component içinde, state'lerden önce bu fonksiyonu ekleyin
+const getDeviceLocale = () => {
+  let locale = "tr-TR";
+  if (Platform.OS === "ios") {
+    locale =
+      NativeModules.SettingsManager?.settings?.AppleLocale ||
+      NativeModules.SettingsManager?.settings?.AppleLanguages?.[0] ||
+      "tr-TR";
+  } else {
+    locale = NativeModules.I18nManager?.localeIdentifier || "tr-TR";
+  }
+  return locale;
+};
+
+// Ardından tarihleri gösterirken Türkçe format kullanın
+// toLocaleDateString yerine şunu kullanın:
+
+const formatTarihTurkce = (date: Date) => {
+  const gun = date.getDate().toString().padStart(2, "0");
+  const ay = (date.getMonth() + 1).toString().padStart(2, "0");
+  const yil = date.getFullYear();
+  return `${gun}.${ay}.${yil}`;
+};
 
 type RootStackParamList = {
   "Prova Kartı": { goToUrl?: string | null };
@@ -301,7 +331,8 @@ export function RandevuForm() {
       const q = query(
         collection(db, "provaRandevular"),
         where("deviceId", "==", deviceId),
-        orderBy("createdAt", "desc")
+        orderBy("createdAt", "desc"),
+        limit(50) // Maksimum 50 kayıt getir
       );
       const querySnapshot = await getDocs(q);
       const randevuListesi = querySnapshot.docs.map((doc) => ({
@@ -426,7 +457,8 @@ export function RandevuForm() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+
+  <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top', 'bottom']}>
       {activeWebUrl ? (
         <WebView
           ref={webViewRef}
@@ -459,7 +491,6 @@ export function RandevuForm() {
               Adınız ve Soyadınız <Text style={styles.required}>*</Text>
             </Text>
             <TextInput value={name} onChangeText={setName} style={styles.textField} />
-
             <Text style={styles.label}>
               Telefon Numaranız <Text style={styles.required}>*</Text>
             </Text>
@@ -469,7 +500,6 @@ export function RandevuForm() {
               keyboardType="phone-pad"
               style={styles.textField}
             />
-
             <Text style={styles.label}>
               E-Posta Adresiniz <Text style={styles.required}>*</Text>
             </Text>
@@ -479,28 +509,26 @@ export function RandevuForm() {
               keyboardType="email-address"
               style={styles.textField}
             />
-
             <Text style={styles.label}>1. Prova Tarihi *</Text>
             <Button
               color="#5897a3"
-              title={tarih1 ? tarih1.toLocaleDateString() : "Tarih Seçiniz"}
+              title={tarih1 ? formatTarihTurkce(tarih1) : "Tarih Seçiniz"}
               onPress={() => handleShowDate("tarih1")}
             />
+            {/* // DateTimePicker için de locale eklemeyi deneyin: */}
             {showDatePicker.tarih1 && (
               <DateTimePicker
                 value={tarih1 || new Date()}
                 minimumDate={bugun}
                 mode="date"
-                display="default"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                locale="tr-TR"
                 onChange={(e, selected) => handleDateChange("tarih1", e, selected)}
               />
             )}
-
             <Text style={styles.label}>1. Prova Saati *</Text>
             <TouchableOpacity style={styles.textField} onPress={() => toggleSaatSecenek("saat1")}>
-              <Text style={{ color: saat1 ? "#000" : "#999" }}>
-                {saat1 || "Saat Seçiniz"}
-              </Text>
+              <Text style={{ color: saat1 ? "#000" : "#999" }}>{saat1 || "Saat Seçiniz"}</Text>
             </TouchableOpacity>
             {showSaatSecenekleri.saat1 && (
               <View>
@@ -511,7 +539,6 @@ export function RandevuForm() {
                 ))}
               </View>
             )}
-
             {showIkinciProva && (
               <>
                 <Text style={[styles.label, { marginTop: 25, color: "#666" }]}>
@@ -531,15 +558,14 @@ export function RandevuForm() {
                     minimumDate={bugun}
                     mode="date"
                     display="default"
+                    locale="tr-TR" // Türkçe dil desteği
                     onChange={(e, selected) => handleDateChange("tarih2", e, selected)}
                   />
                 )}
 
                 <Text style={styles.label}>2. Prova Saati</Text>
                 <TouchableOpacity style={styles.textField} onPress={() => toggleSaatSecenek("saat2")}>
-                  <Text style={{ color: saat2 ? "#000" : "#999" }}>
-                    {saat2 || "Saat Seçiniz"}
-                  </Text>
+                  <Text style={{ color: saat2 ? "#000" : "#999" }}>{saat2 || "Saat Seçiniz"}</Text>
                 </TouchableOpacity>
                 {showSaatSecenekleri.saat2 && (
                   <View>
@@ -552,7 +578,6 @@ export function RandevuForm() {
                 )}
               </>
             )}
-
             <Text style={styles.label}>Ürün Teslim Tarihi *</Text>
             <Button
               color="#5897a3"
@@ -565,15 +590,13 @@ export function RandevuForm() {
                 minimumDate={bugun}
                 mode="date"
                 display="default"
+                locale="tr-TR" // Türkçe dil desteği
                 onChange={(e, selected) => handleDateChange("teslim", e, selected)}
               />
             )}
-
             <Text style={styles.label}>Teslim Saati *</Text>
             <TouchableOpacity style={styles.textField} onPress={() => toggleSaatSecenek("teslimSaat")}>
-              <Text style={{ color: teslimSaat ? "#000" : "#999" }}>
-                {teslimSaat || "Saat Seçiniz"}
-              </Text>
+              <Text style={{ color: teslimSaat ? "#000" : "#999" }}>{teslimSaat || "Saat Seçiniz"}</Text>
             </TouchableOpacity>
             {showSaatSecenekleri.teslimSaat && (
               <View>
@@ -584,7 +607,6 @@ export function RandevuForm() {
                 ))}
               </View>
             )}
-
             <Text style={styles.label}>Paragraf Metni</Text>
             <TextInput
               value={notlar}
@@ -594,14 +616,12 @@ export function RandevuForm() {
               style={[styles.textField, { height: 100 }]}
               placeholder="Beğendiğiniz modellerin stok numarasını buraya yazabilirsiniz"
             />
-
             <View style={styles.checkboxContainer}>
               <Switch value={onay} onValueChange={setOnay} />
               <Text style={styles.checkboxLabel}>
                 Bilgileri Onaylıyorum <Text style={styles.required}>*</Text>
               </Text>
             </View>
-
             <View style={styles.buttonContainer}>
               <Button
                 color="#5897a3"
@@ -640,7 +660,6 @@ export function RandevuForm() {
                       <Text style={styles.customerName}>{item.name}</Text>
                       <Text style={styles.customerContact}>📞 {item.phone}</Text>
                     </View>
-                   
                   </View>
 
                   <View style={styles.emailContainer}>
@@ -734,7 +753,7 @@ export function RandevuForm() {
           )}
         </ScrollView>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -1176,3 +1195,4 @@ const styles = StyleSheet.create({
 });
 
 export default RandevuForm;
+

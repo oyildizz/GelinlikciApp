@@ -1,4 +1,6 @@
-// utils/SimplePromoCodeService.ts
+
+
+// utils/SimplePromoCodeService.ts - Yeni Yıl Kampanyası İçin
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import promoCodesData from '../(tabs)/promoCodes.json';
 
@@ -8,14 +10,20 @@ interface AssignedPromoCode {
   deviceId: string;
   isUsed: boolean;
   discountPercentage: number;
+  campaignName: string;
 }
 
 class SimplePromoCodeService {
   private static readonly USER_PROMO_KEY = 'user_promo_code';
   private static readonly USED_CODES_KEY = 'used_promo_codes';
   private static readonly DEVICE_ID_KEY = 'device_unique_id';
-  private static readonly GLOBAL_USED_CODES_KEY = 'global_used_promo_codes'; // Global kullanılan kodlar
-  private static readonly DEVICE_REGISTRY_KEY = 'device_registry'; // Cihaz kayıt listesi
+  private static readonly GLOBAL_USED_CODES_KEY = 'global_used_promo_codes';
+  private static readonly DEVICE_REGISTRY_KEY = 'device_registry';
+  
+  // Kampanya ayarları
+  private static readonly CAMPAIGN_NAME = 'Yeni Yıl Kampanyası';
+  private static readonly DISCOUNT_PERCENTAGE = 20; // %20 indirim
+  private static readonly MAX_USERS = 100; // İlk 100 kişi
 
   // Basit ama kalıcı cihaz ID oluşturucu
   static async getDeviceId(): Promise<string> {
@@ -23,11 +31,9 @@ class SimplePromoCodeService {
       let deviceId = await AsyncStorage.getItem(this.DEVICE_ID_KEY);
       
       if (!deviceId) {
-        // Benzersiz ve kalıcı ID oluştur
         const timestamp = Date.now();
         const random = Math.random().toString(36).substring(2, 15);
         deviceId = `WED_${timestamp}_${random}`;
-        
         await AsyncStorage.setItem(this.DEVICE_ID_KEY, deviceId);
       }
       
@@ -86,7 +92,7 @@ class SimplePromoCodeService {
     }
   }
 
-  // Kullanıcının lokal kullanılan kodlarını getir (eski sistem ile uyumluluk)
+  // Kullanıcının lokal kullanılan kodlarını getir
   static async getUsedCodes(): Promise<string[]> {
     try {
       const usedCodes = await AsyncStorage.getItem(this.USED_CODES_KEY);
@@ -102,8 +108,6 @@ class SimplePromoCodeService {
     try {
       const deviceId = await this.getDeviceId();
       const registry = await this.getDeviceRegistry();
-      
-      // Ayrıca kullanıcının lokal kaydı var mı da kontrol et
       const userPromo = await this.getUserPromoCode();
       
       return registry.includes(deviceId) || !!userPromo;
@@ -127,26 +131,22 @@ class SimplePromoCodeService {
   // Kullanıcıya yeni promosyon kodu ata
   static async assignPromoCode(): Promise<AssignedPromoCode | null> {
     try {
-      // Cihaz ID al
       const deviceId = await this.getDeviceId();
-
-      // Bu cihaz daha önce kod aldı mı kontrol et
       const hasReceivedCode = await this.hasDeviceReceivedCode();
+      
       if (hasReceivedCode) {
-        // Daha önce aldığı kodu getir
         const existingCode = await this.getUserPromoCode();
         if (existingCode) {
-          console.log('Cihaz daha önce kod almış, mevcut kod döndürülüyor:', existingCode.code);
+          console.log('Cihaz daha önce kod almış:', existingCode.code);
           return existingCode;
         }
       }
 
-      // Global kullanılan kodları al
       const globalUsedCodes = await this.getGlobalUsedCodes();
       
-      // İlk 100 kod kontrolü
-      if (globalUsedCodes.length >= 100) {
-        console.warn('İlk 100 promosyon kodu dağıtıldı!');
+      // İlk 100 kişi kontrolü
+      if (globalUsedCodes.length >= this.MAX_USERS) {
+        console.warn(`İlk ${this.MAX_USERS} kişi kotası doldu!`);
         return null;
       }
       
@@ -170,18 +170,17 @@ class SimplePromoCodeService {
         assignedAt: new Date().toISOString(),
         deviceId,
         isUsed: false,
-        discountPercentage: promoCodesData.discountPercentage
+        discountPercentage: this.DISCOUNT_PERCENTAGE,
+        campaignName: this.CAMPAIGN_NAME,
       };
 
-      // Kullanıcıya ata, global listesine ve cihaz registry'sine ekle
+      // Kullanıcıya ata ve listelere ekle
       await AsyncStorage.setItem(this.USER_PROMO_KEY, JSON.stringify(assignedPromo));
       await this.addGlobalUsedCode(selectedCode);
       await this.addToDeviceRegistry(deviceId);
-
-      // Eski sistem ile uyumluluk için lokal listeye de ekle
       await this.addLocalUsedCode(selectedCode);
 
-      console.log(`Promosyon kodu atandı: ${selectedCode} (${globalUsedCodes.length + 1}/100)`);
+      console.log(`Promosyon kodu atandı: ${selectedCode} (${globalUsedCodes.length + 1}/${this.MAX_USERS})`);
       return assignedPromo;
 
     } catch (error) {
@@ -190,7 +189,7 @@ class SimplePromoCodeService {
     }
   }
 
-  // Lokal kullanılan kod listesine ekle (eski sistem uyumluluğu)
+  // Lokal kullanılan kod listesine ekle
   private static async addLocalUsedCode(code: string): Promise<void> {
     try {
       const usedCodes = await this.getUsedCodes();
@@ -224,16 +223,17 @@ class SimplePromoCodeService {
     availableCodes: number;
     userHasCode: boolean;
     userCode?: string;
-    remainingQuota: number; // İlk 100'den kalan
+    remainingQuota: number;
+    discountPercentage: number;
+    campaignName: string;
   }> {
     try {
       const globalUsedCodes = await this.getGlobalUsedCodes();
       const userPromo = await this.getUserPromoCode();
-      const deviceRegistry = await this.getDeviceRegistry();
       
       const totalCodes = promoCodesData.promoCodes.length;
       const usedCodesCount = globalUsedCodes.length;
-      const remainingQuota = Math.max(0, 100 - usedCodesCount);
+      const remainingQuota = Math.max(0, this.MAX_USERS - usedCodesCount);
       const availableCodes = Math.min(totalCodes - usedCodesCount, remainingQuota);
       
       return {
@@ -243,20 +243,24 @@ class SimplePromoCodeService {
         userHasCode: !!userPromo,
         userCode: userPromo?.code,
         remainingQuota,
+        discountPercentage: this.DISCOUNT_PERCENTAGE,
+        campaignName: this.CAMPAIGN_NAME,
       };
     } catch (error) {
       console.error('İstatistik alma hatası:', error);
       return {
-        totalCodes: promoCodesData.promoCodes?.length || 200,
+        totalCodes: promoCodesData.promoCodes?.length || 100,
         usedCodes: 0,
-        availableCodes: 100,
+        availableCodes: this.MAX_USERS,
         userHasCode: false,
-        remainingQuota: 100,
+        remainingQuota: this.MAX_USERS,
+        discountPercentage: this.DISCOUNT_PERCENTAGE,
+        campaignName: this.CAMPAIGN_NAME,
       };
     }
   }
 
-  // Debug: Tüm verileri temizle (sadece test için)
+  // Debug: Tüm verileri temizle
   static async clearAllData(): Promise<void> {
     try {
       await AsyncStorage.multiRemove([
