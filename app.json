@@ -11,36 +11,63 @@
     },
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.rabiaparlak.AngelHouseWedding2"
     },
     "android": {
+      "compileSdkVersion": 35,
+      "targetSdkVersion": 35,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.karmeyil.angelhousewedding"
+      "package": "com.karmeyil.angelhousewedding",
+      "permissions": []
     },
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/icon.png"
     },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+"plugins": [
+  "expo-router",
+  [
+    "expo-splash-screen",
+    {
+      "image": "./assets/images/splash-icon.png",
+      "imageWidth": 200,
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    }
+  ],
+  "expo-tracking-transparency",
+  [
+    "expo-build-properties",
+    {
+      "android": {
+        "compileSdkVersion": 35,
+        "targetSdkVersion": 35,
+        "buildToolsVersion": "35.0.0",
+        "minSdkVersion": 24,
+        "ndkVersion": "28.0.12433566",
+        "gradleVersion": "8.10.2",
+        "androidGradlePluginVersion": "8.7.3",
+        "kotlinVersion": "1.9.24",
+        "newArchEnabled": false,
+        "enableProguardInReleaseBuilds": true,
+        "enableShrinkResourcesInReleaseBuilds": true,
+        "packagingOptions": {
+          "jniLibs": {
+            "useLegacyPackaging": true
+          }
         }
-      ],
-      "expo-tracking-transparency"
-    ],
+      }
+    }
+  ],
+  "./plugins/withAndroid16KB"
+],
     "experiments": {
       "typedRoutes": true
     },
@@ -53,4 +80,6 @@
       }
     }
   }
-}
+}  
+
+
