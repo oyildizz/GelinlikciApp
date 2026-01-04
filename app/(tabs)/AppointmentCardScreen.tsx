@@ -521,7 +521,7 @@ export function RandevuForm() {
                 value={tarih1 || new Date()}
                 minimumDate={bugun}
                 mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
+                display="default"
                 locale="tr-TR"
                 onChange={(e, selected) => handleDateChange("tarih1", e, selected)}
               />
