@@ -109,7 +109,7 @@ const AccountScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#104438',
+    backgroundColor: '#fff',
   },
   loading: {
     flex: 1,

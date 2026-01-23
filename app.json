@@ -11,7 +11,7 @@
     },
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.rabiaparlak.AngelHouseWedding2"
@@ -51,11 +51,9 @@
         "targetSdkVersion": 35,
         "buildToolsVersion": "35.0.0",
         "minSdkVersion": 24,
-        "ndkVersion": "28.0.12433566",
-        "gradleVersion": "8.10.2",
-        "androidGradlePluginVersion": "8.7.3",
-        "kotlinVersion": "1.9.24",
-        "newArchEnabled": false,
+        "ndkVersion": "27.1.12297006",
+        "kotlinVersion": "2.0.21",
+        "newArchEnabled": true,
         "enableProguardInReleaseBuilds": true,
         "enableShrinkResourcesInReleaseBuilds": true,
         "packagingOptions": {

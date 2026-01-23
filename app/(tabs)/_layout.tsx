@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather, FontAwesome } from "@expo/vector-icons";
@@ -96,23 +95,24 @@ export default function Layout() {
           },
         })}
       />
-      <Tab.Screen 
-        name="Favorilerim" 
-        component={MyFavourite} 
+      <Tab.Screen
+        name="Favorilerim"
+        component={MyFavourite}
         listeners={({ navigation }) => ({
           tabPress: () => {
             navigation.navigate("Favorilerim", { goToUrl: "https://angelhousewedding.com/wishlist/" });
           },
-        })} />
-      <Tab.Screen
-        name="Prova Al"
-        component={AppointmentCardScreen}
-        listeners={({ navigation }) => ({
-          tabPress: () => {
-            navigation.navigate("Prova Al" as never, { goToUrl: null } as never);
-          },
         })}
       />
+      <Tab.Screen
+  name="Prova Al"
+  component={AppointmentCardScreen}
+  listeners={({ navigation }) => ({
+    tabPress: () => {
+      navigation.navigate("Prova Al");
+    },
+  })}
+/>
       <Tab.Screen
         name="Hesabım"
         component={AccountScreen}
