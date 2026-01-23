@@ -2,7 +2,7 @@
 
 // utils/SimplePromoCodeService.ts - Yeni Yıl Kampanyası İçin
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import promoCodesData from '../(tabs)/promoCodes.json';
+import promoCodesData from '../../app/(tabs)/promoCodes.json';
 
 interface AssignedPromoCode {
   code: string;

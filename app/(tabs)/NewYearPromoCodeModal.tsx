@@ -157,7 +157,7 @@ const NewYearPromoCodeModal: React.FC<NewYearPromoCodeModalProps> = ({ visible, 
               <View style={styles.discountSection}>
                 <Text style={styles.discountLabel}>İlk randevunuzda</Text>
 
-                <Text style={styles.discountValue}>%20</Text>
+                <Text style={styles.discountValue}>%10</Text>
 
                 <Text style={styles.discountDescription}>
                   İndirim kazanmak için aşağıdaki{"\n"}promosyon kodunu kullanın
